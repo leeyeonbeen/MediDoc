@@ -43,8 +43,6 @@ exports.doctor = async function (req, res) {
     const authUser = parseInt(req.verifiedToken.id, 10);
     const patientIdx = parseInt(req.query.patient, 10);
 
-    console.log(doctorIdx);
-    console.log(authUser);
     // 잘못된 접근 - 의사 인덱스와 토큰의 인덱스가 다를 때
     if (doctorIdx !== authUser) {
         logger.info(`Error Doctor - doctorIdx and token.id are different`);
