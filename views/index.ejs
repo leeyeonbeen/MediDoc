@@ -1,0 +1,6 @@
+<input type="button" value="환자" onclick="moveLogin('patient')" />
+<input type="button" value="의사" onclick="moveLogin('doctor')" />
+
+<script>
+    moveLogin = (identity) => { location.href = `/login?identity=${identity}`; }
+</script>
