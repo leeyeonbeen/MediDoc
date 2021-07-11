@@ -1,0 +1,12 @@
+환자 리스트
+
+
+<table class="select-table">
+    <% patients.forEach(element => { %>
+        <tr> <td onclick="patientDetail(<%= element.userIndex %>);"><%= element.name %></td> </tr>
+    <% }); %>
+</table>
+
+<script>
+    patientDetail = (idx) => { location.href=`/doctor/<%=doctorIdx%>?patient=${idx}`; }
+</script>
