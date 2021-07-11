@@ -5,6 +5,7 @@ require('dotenv').config();
 const secret = process.env.JWT_SIGNATURE;
 
 exports.index = async function (req, res) {
+    res.clearCookie('token');
     logger.info('Index');
     return res.render('index.ejs');
 };
@@ -77,11 +78,6 @@ exports.loginProcess = async function (req, res) {
         }
     );
 
-    if (identity === 'patient') {
-        // 환자 페이지 이동
-        return res.redirect(`/patient/${userIndex}?token=${token}`);
-    } else {
-        // 의사 페이지 이동
-        return res.redirect(`/doctor/${userIndex}?token=${token}`);
-    }
+    res.cookie('token', token);
+    return res.redirect(`/${identity}/${userIndex}`);
 };

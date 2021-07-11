@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const secret = process.env.JWT_SIGNATURE;
 const auth = (req, res, next) => {
-    const token = req.query.token;
+    const token = req.cookies.token;
     
     // 토큰이 없을 때
     if(!token) { res.redirect('/'); }
