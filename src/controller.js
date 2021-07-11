@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
+const dynamodb = require('../config/dynamodb');
 const {logger} = require('../config/logger');
+const dao = require('./dao');
 
 require('dotenv').config();
 const secret = process.env.JWT_SIGNATURE;
@@ -80,6 +82,10 @@ exports.doctor = async function (req, res) {
                 'userIndex': 1,
                 'name': '김희동'
             };
+
+            // dynamo 테스트 코드
+            await dao.dynamoTest()
+
             return res.render('patient-detail.ejs', {'doctorIdx': doctorIdx, 'patientInfo': patientInfo});
         }
     }
