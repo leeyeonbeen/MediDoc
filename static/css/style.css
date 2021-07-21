@@ -569,7 +569,7 @@ progress {
 }
 
 .img-fluid {
-  max-width: 100%;
+  max-width: 13%;
   height: auto;
 }
 
@@ -1457,7 +1457,9 @@ progress {
 
   .col-lg-9 {
     flex: 0 0 auto;
-    width: 75%;
+    width: 60%;
+    position: absolute;
+    left: 20%;
   }
 
   .col-lg-10 {
@@ -10860,4 +10862,46 @@ textarea.form-control-lg {
   background: #abbaab;  /* fallback for old browsers */
   background: -webkit-linear-gradient(to right, #dfd9d9, #abbaab);
   background: linear-gradient(to right, #dfd9d9, #abbaab);
+}
+
+.medical-data {
+  width: 100%;
+}
+
+.medical-data h4 {
+  margin: 0.5rem 0 0.5rem 0;
+}
+
+.medical-data h5 {
+  margin: 3rem 0 3rem 0;
+}
+
+/* toggle */
+
+.toggle_button {
+  cursor:pointer;
+  display:block;
+  background:#eee;
+  text-align:center;
+  border:1px solid #ccc;
+  margin-top: 2rem;
+}
+
+#toggle_button1, #toggle_contents1,
+#toggle_button2, #toggle_contents2,
+#toggle_button3, #toggle_contents3 {
+  height:0;
+  overflow:hidden;
+  position:absolute;
+}
+
+#toggle_button1:checked + #toggle_contents1,
+#toggle_button2:checked + #toggle_contents2,
+#toggle_button3:checked + #toggle_contents3
+ {
+  height:auto;
+  position:relative;
+  border:1px solid #ccc;
+  border-top:0;
+  padding:10px;
 }

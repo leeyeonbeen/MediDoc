@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
 
 body {
-    background-image: linear-gradient( rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('https://pixabay.com/get/gbe53a0973da7e3a68efb08a3a237af55c513f458979ae361cb6ce31f117b88dd64a4a0191e2ecb18f471b59f9e795e16_1920.jpg');
+    background-image: linear-gradient( rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('/img/bg.jpg');
     background-size: cover;
 }
 
