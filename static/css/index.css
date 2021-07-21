@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+body {
+    background-image: linear-gradient( rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url('/img/bg.jpg');
+    background-size: cover;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 700;
+}
+
+.title {
+    position: absolute;
+    height: 300px;
+    width: 640px;
+    margin: -110px 0 0 -320px;
+    top: 50%;
+    left: 50%;
+}
+
+.title p {
+    font-size: 1.25rem;
+    font-weight: 400;
+}
+
+.loginBtn {
+    margin-top: 1.7rem;
+    width: 100%;
+    margin-left: 3rem;
+}
+
+.title button {
+    font-size: 1.3rem;
+    width: 250px;
+    height: 60px;
+    margin: 0.5rem;
+}
+
+a.button{display:inline-block; padding: 10px 20px; text-decoration:none; color:#fff; background:#000; margin:20px;}
+
+#modal{
+  display:none;
+  position:fixed; 
+  width:100%; height:100%;
+  top:0; left:0; 
+  background:rgba(0,0,0,0.3);
+}
+
+.modal-con{
+  display:none;
+  position:fixed;
+  top:50%; left:50%;
+  transform: translate(-50%,-50%);
+  max-width: 60%;
+  min-height: 30%;
+  background:#fff;
+}
+
+.modal-con .title{
+  font-size:20px; 
+  padding: 10px 15px 10px 15px; 
+  background : #212529;
+  color: white;
+}
+
+.modal-con .con{
+  font-size:15px;
+  line-height:1.3;
+  padding: 30px;
+}
+
+.con p {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 500;
+}
+
+.login input {
+  display: block;
+  width: 380px;
+  height: 50px;
+  margin: 20px;
+  padding: 5px;
+}

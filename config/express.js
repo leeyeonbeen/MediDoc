@@ -16,6 +16,10 @@ module.exports = function () {
     app.use(cors());
     app.use(express.static(process.cwd() + '/public'));
 
+    app.set("view engine", "ejs");
+    app.set("views", process.cwd() + "/views");
+    app.use(express.static(process.cwd() + '/static'));
+
     // Routing configure
     require('../src/router')(app);
     
