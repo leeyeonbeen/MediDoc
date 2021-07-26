@@ -6,26 +6,96 @@ const dao = require('./dao');
 require('dotenv').config();
 const secret = process.env.JWT_SIGNATURE;
 
+/**
+ * 인덱스 페이지 
+ */
 exports.index = async function (req, res) {
-    res.clearCookie('token');
-    logger.info('Index');
-    return res.render('index.ejs');
+    const token = req.cookies.token;
+    let userIndex;
+
+    if (token) {
+        const p = new Promise(
+            (resolve, reject) => {
+                jwt.verify(token, secret , (err, verifiedToken) => {
+                    if(err) reject(err);
+                    resolve(verifiedToken)
+                })
+            }
+        );
+        const onError = (error) => {
+            res.clearCookie('token');
+            return res.redirect('/');
+        };
+        p.then((verifiedToken)=>{
+            const userIndex = verifiedToken.id;
+            
+            logger.info('Index - token');
+            // 토큰 확인 (DB 조회)
+            if(userIndex == 117)
+                return res.redirect('/patient/117');
+            else
+                return res.redirect('/doctor/319');
+
+        }).catch(onError);
+    } else {
+        logger.info('Index - none token');
+        return res.render('index.ejs');
+    }
 };
 
-exports.login = async function (req, res) {
+/**
+ * 로그인 요청
+ */
+ exports.login = async function (req, res) {
     res.clearCookie('token');
     const identity = req.query.identity;
-
-    // query string 잘못 입력한 경우
-    if (identity === 'patient' || identity === 'doctor') {}
-    else {
+    const code = req.body.inputCode;
+    let userIndex = 0;
+    
+    // query string 및 inputCode validation check
+    if (identity === 'patient') {
+        // 지금 환자는 111, 이후에 DB 연결하면 조회하는 걸로 수정
+        if (parseInt(code, 10) !== 111) {
+            logger.info(`Error Login - non valid patient code`);
+            return res.redirect('/');
+        }
+        // 임시로 환자 인덱스 설정, DB 연결되면 조회
+        userIndex = 117;
+    } else if (identity === 'doctor') {
+        // 지금 의사는 222, 이후에 DB 연결하면 조회하는 걸로 수정
+        if (parseInt(code, 10) !== 222) {
+            logger.info(`Error Login - non valid doctor code`);
+            return res.redirect('/');
+        }
+        // 임시로 의사 인덱스 설정, DB 연결되면 조회
+        userIndex = 319;
+    } else {
         logger.info(`Error Login - non valid quert string`);
-        res.redirect('/');
+        return res.redirect('/');
     }
 
-    logger.info(`Login - ${identity}`);
-    return res.render('login.ejs', {id: identity});
+    //토큰 생성
+    let token = await jwt.sign({
+            id: userIndex,
+        },
+        secret,
+        {
+            expiresIn: '2h',
+            subject: 'user-info',
+        }
+    );
+
+    res.cookie('token', token);
+    return res.redirect(`/${identity}/${userIndex}`);
 };
+
+/**
+ * 로그아웃 요청
+ */
+exports.logout = async function (req, res) {
+    res.clearCookie('token');
+    return res.redirect('/');
+}
 
 exports.patient = async function (req, res) {
     const patientIdx = parseInt(req.params.patientIdx, 10);
@@ -90,45 +160,3 @@ exports.doctor = async function (req, res) {
         }
     }
 }
-
-exports.loginProcess = async function (req, res) {
-    const identity = req.query.identity;
-    const code = req.body.inputCode;
-    let userIndex = 0;
-
-    // query string 및 inputCode validation check
-    if (identity === 'patient') {
-        // 지금 환자는 111, 이후에 DB 연결하면 조회하는 걸로 수정
-        if (parseInt(code, 10) !== 111) {
-            logger.info(`Error Login - non valid patient code`);
-            return res.redirect('/login?identity=patient');
-        }
-        // 임시로 환자 인덱스 설정, DB 연결되면 조회
-        userIndex = 117;
-    } else if (identity === 'doctor') {
-        // 지금 의사는 222, 이후에 DB 연결하면 조회하는 걸로 수정
-        if (parseInt(code, 10) !== 222) {
-            logger.info(`Error Login - non valid doctor code`);
-            return res.redirect('/login?identity=doctor');
-        }
-        // 임시로 의사 인덱스 설정, DB 연결되면 조회
-        userIndex = 319;
-    } else {
-        logger.info(`Error Login - non valid quert string`);
-        return res.redirect('/');
-    }
-
-    //토큰 생성
-    let token = await jwt.sign({
-            id: userIndex,
-        },
-        secret,
-        {
-            expiresIn: '2h',
-            subject: 'user-info',
-        }
-    );
-
-    res.cookie('token', token);
-    return res.redirect(`/${identity}/${userIndex}`);
-};

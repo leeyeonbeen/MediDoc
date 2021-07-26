@@ -22,6 +22,9 @@ module.exports = function () {
 
     // Routing configure
     require('../src/router')(app);
+
+    // Error Handling
+    app.use(function(req, res) { res.status(404).send('잘못된 접근입니다.'); });
     
     return app;
 };

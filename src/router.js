@@ -3,8 +3,9 @@ module.exports = function(app){
     const auth = require('../config/auth');
 
     app.get('/', controller.index);
-    app.get('/login', controller.login);
+    app.post('/login', controller.login);
+    app.get('/logout', controller.logout);
+
     app.get('/patient/:patientIdx', auth, controller.patient);
     app.get('/doctor/:doctorIdx', auth, controller.doctor);
-    app.post('/loginProcess', controller.loginProcess);
 };

@@ -47,7 +47,7 @@
         <div class="modal-con login-patient">
             <div class="con">
                 <p>환자 로그인</p>
-                <form class="login" action='/loginProcess?identity=patient' method='POST'>
+                <form class="login" action='/login?identity=patient' method='POST'>
                     <input type="input" name="inputCode" placeholder="환자 코드를 입력하세요.">
                     <input type="submit" value="로그인">
                 </form>
@@ -59,7 +59,7 @@
         <div class="modal-con login-doctor">
             <div class="con">
                 <p>의사 로그인</p>
-                <form class="login" action='/loginProcess?identity=doctor' method='POST'>
+                <form class="login" action='/login?identity=doctor' method='POST'>
                     <input type="text" name="inputCode" placeholder="의사 코드를 입력하세요.">
                     <input type="submit" value="로그인">
                 </form>
@@ -81,7 +81,5 @@
 
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Core theme JS-->
-        <script src="js/scripts.js"></script>
     </body>
 </html>
