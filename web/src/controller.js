@@ -100,6 +100,9 @@ exports.logout = async function (req, res) {
 exports.patient = async function (req, res) {
     const patientIdx = parseInt(req.params.patientIdx, 10);
     const authUser = parseInt(req.verifiedToken.id, 10);
+    const heartRate = 68; // 심박동수 예시
+    const temperature = 36.5; // 체온 예시
+    const oxygen = 98; // 산소포화도 예시 
 
     // 잘못된 접근 - 환자 인덱스와 토큰의 인덱스가 다를 때
     if (patientIdx !== authUser) {
@@ -107,7 +110,7 @@ exports.patient = async function (req, res) {
         return res.redirect('/');
     }
 
-    return res.render('clinic.ejs');
+    return res.render('clinic.ejs', {heartRate, temperature, oxygen});
 };
 
 exports.doctor = async function (req, res) {
