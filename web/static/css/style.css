@@ -10970,8 +10970,14 @@ textarea.form-control-lg {
   padding: 0 3rem 1rem 3rem;
 }
 
-#vp {
+#vptest {
   max-width: 10%;
+  margin: 0 5rem;
+}
+
+#vp {
+  float: left;
+  max-width: 40%;
   margin: 0 5rem;
 }
 
@@ -10995,4 +11001,14 @@ td {
   text-align: center;
   font-size: 1.3rem;
   margin-bottom: 1rem;
+}
+
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(100px, auto);
+}
+
+.patientVideo, .doctorVideo, .um {
+  border: 2px black solid;
 }
