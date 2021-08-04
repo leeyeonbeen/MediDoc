@@ -10,4 +10,5 @@ module.exports = function(app){
     app.get('/doctor/:doctorIdx', auth, controller.doctor);
     app.get('/patient/:patientIdx/monitor', auth, controller.patientMonitor);
     
+    app.get('/test', controller.test);
 };

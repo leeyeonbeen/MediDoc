@@ -172,10 +172,12 @@ exports.doctor = async function (req, res) {
                 'name': '김희동'
             };
 
-            // dynamo 테스트 코드
-            await dao.dynamoTest()
-
             return res.render('patient-detail.ejs', {'doctorIdx': doctorIdx, 'patientInfo': patientInfo});
         }
     }
+}
+
+exports.test = async function (req, res) {
+    // dynamo 테스트 코드
+    await dao.findAll();
 }
