@@ -179,5 +179,6 @@ exports.doctor = async function (req, res) {
 
 exports.test = async function (req, res) {
     // dynamo 테스트 코드
-    await dao.findAll();
+    const items = await dao.findAll();
+    return res.send({items});
 }

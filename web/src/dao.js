@@ -12,15 +12,9 @@ exports.dynamoTest = async () => {
             ':id': 'dsadasdasd'
         }
     }
-    
-    await dynamo.query(params, (err, data) => {
-        if (err) {
-            console.log(err);
-        } else {
-            const { Items } = data;
-            console.log(Items);
-        }
-    });
+
+    const data = await dynamo.query(params).promise();
+    return data.Items;
 };
 
 // 전체 조회
@@ -31,12 +25,6 @@ exports.findAll = async () => {
         TableName: dynamo_config.table_name
     };
 
-    await dynamo.scan(params, (err, data) => {
-        if (err) {
-            console.log(err);
-        } else {
-            const { Items } = data;
-            console.log(Items);
-        }
-    });
+    const data = await dynamo.scan(params).promise();
+    return data.Items;
 }
