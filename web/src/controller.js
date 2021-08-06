@@ -100,6 +100,9 @@ exports.logout = async function (req, res) {
 exports.patient = async function (req, res) {
     const patientIdx = parseInt(req.params.patientIdx, 10);
     const authUser = parseInt(req.verifiedToken.id, 10);
+    const heartRate = 68; // 심박동수 예시
+    const temperature = 36.5; // 체온 예시
+    const oxygen = 98; // 산소포화도 예시 
 
     // 잘못된 접근 - 환자 인덱스와 토큰의 인덱스가 다를 때
     if (patientIdx !== authUser) {
@@ -107,8 +110,24 @@ exports.patient = async function (req, res) {
         return res.redirect('/');
     }
 
-    return res.render('clinic.ejs');
+    return res.render('clinic.ejs', {patientIdx, heartRate, temperature, oxygen});
 };
+
+exports.patientMonitor = async function (req, res) {
+    const patientIdx = parseInt(req.params.patientIdx, 10);
+    const authUser = parseInt(req.verifiedToken.id, 10);
+    const heartRate = 68; // 심박동수 예시
+    const temperature = 36.5; // 체온 예시
+    const oxygen = 98; // 산소포화도 예시 
+
+    // 잘못된 접근 - 환자 인덱스와 토큰의 인덱스가 다를 때
+    if (patientIdx !== authUser) {
+        logger.info(`Error Patient - patientIdx and token.id are different`);
+        return res.redirect('/');
+    }
+
+    return res.render('patientMonitor.ejs', {heartRate, temperature, oxygen});
+}
 
 exports.doctor = async function (req, res) {
     const doctorIdx = parseInt(req.params.doctorIdx, 10);
@@ -153,10 +172,13 @@ exports.doctor = async function (req, res) {
                 'name': '김희동'
             };
 
-            // dynamo 테스트 코드
-            await dao.dynamoTest()
-
             return res.render('patient-detail.ejs', {'doctorIdx': doctorIdx, 'patientInfo': patientInfo});
         }
     }
+}
+
+exports.test = async function (req, res) {
+    // dynamo 테스트 코드
+    const items = await dao.findAll();
+    return res.send({items});
 }

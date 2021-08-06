@@ -58,7 +58,7 @@ body {
   font-weight: 400;
   line-height: 1.5;
   color: #212529;
-  background-color: #fff;
+  background-color: rgb(241, 241, 241);
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
@@ -457,9 +457,14 @@ progress {
   display: none !important;
 }
 
+.title {
+  margin-left: 5rem;
+}
+
 .lead {
   font-size: 1.25rem;
-  font-weight: 300;
+  font-weight: 400;
+  margin: 0 0 2rem 5rem;
 }
 
 .display-1 {
@@ -7130,8 +7135,8 @@ textarea.form-control-lg {
 }
 
 .py-5 {
-  padding-top: 3rem !important;
-  padding-bottom: 3rem !important;
+  padding-top: 0.1rem !important;
+  padding-bottom: 0.1rem !important;
 }
 
 .pt-0 {
@@ -10876,20 +10881,30 @@ textarea.form-control-lg {
   margin: 3rem 0 3rem 0;
 }
 
+.checkWeek, .monitor {
+  margin: 1rem 5rem 4rem 5rem;
+  font-size: 1.3rem;
+  color: #2b6dd1;
+}
+
 /* toggle */
 
 .toggle_button {
   cursor:pointer;
   display:block;
-  background:#eee;
+  background-color: white;
+  color: #2b6dd1;
   text-align:center;
-  border:1px solid #ccc;
-  margin-top: 2rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  margin: 0.8rem 5rem 0.5rem 5rem;
+  padding: 0.2rem 0;
 }
 
 #toggle_button1, #toggle_contents1,
 #toggle_button2, #toggle_contents2,
-#toggle_button3, #toggle_contents3 {
+#toggle_button3, #toggle_contents3,
+#toggle_button4, #toggle_contents4 {
   height:0;
   overflow:hidden;
   position:absolute;
@@ -10897,11 +10912,103 @@ textarea.form-control-lg {
 
 #toggle_button1:checked + #toggle_contents1,
 #toggle_button2:checked + #toggle_contents2,
-#toggle_button3:checked + #toggle_contents3
- {
-  height:auto;
-  position:relative;
-  border:1px solid #ccc;
-  border-top:0;
-  padding:10px;
+#toggle_button3:checked + #toggle_contents3,
+#toggle_button4:checked + #toggle_contents4 {
+  height: auto;
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: rgb(255, 255, 255);
+  margin: 0 5rem;
+}
+
+.cardData {
+  text-align: center;
+  background-color: white;
+  margin: 15px 30% 20px 30%;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+}
+
+.unit {
+  font-weight: 400;
+  font-size: 1.5rem;
+}
+
+.heartRate {
+  font-weight: 500;
+  font-size: 4rem;
+  color: rgb(241, 82, 70);
+}
+
+.temperature {
+  font-weight: 500;
+  font-size: 4rem;
+  color: rgb(138, 59, 211);
+}
+
+.oxygen {
+  font-weight: 500;
+  font-size: 4rem;
+  color: rgb(83, 199, 30);
+}
+
+.electrocardiogram {
+  font-weight: 500;
+  font-size: 4rem;
+  color: rgb(0, 0, 0);
+}
+
+.icon {
+  max-width: 15%;
+  height: auto;
+  padding: 0 6px 10px 0;
+}
+
+.explanation {
+  padding: 0 3rem 1rem 3rem;
+}
+
+#vptest {
+  max-width: 10%;
+  margin: 0 5rem;
+}
+
+#vp {
+  float: left;
+  max-width: 40%;
+  margin: 0 5rem;
+}
+
+.patientTable {
+  margin: 2rem;
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+table {
+  border: 2px solid #ccc;
+}
+
+td {
+  width: 500px;
+  padding: 0.6rem;
+}
+
+.patientMonitor {
+  text-align: center;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: minmax(100px, auto);
+}
+
+.patientVideo, .doctorVideo, .um {
+  border: 2px black solid;
 }

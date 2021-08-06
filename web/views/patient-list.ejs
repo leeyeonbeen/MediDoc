@@ -36,23 +36,43 @@
         <!-- Content section-->
         <section class="py-5">
             <div class="container my-5">
-                <div class="row justify-content-center">
-                    <div class="col-lg-6">
-                        <h2>담당 환자 목록</h2>
+                    <div class="col-lg-9">
+                        <h2 class="title">담당 환자 목록</h2>
                         <p class="lead">담당 환자와의 모니터링을 통해 상태를 확인하세요.</p>
-                        <table class="select-table">
-                            <% patients.forEach(element => { %>
-                                <tr> <td onclick="patientDetail(<%= element.userIndex %>);"><%= element.name %></td> </tr>
-                            <% }); %>
-                        </table>
+                        
+                        <% patients.forEach(element => { %>
+                            <label for="toggle_button<%= element.userIndex %>" class="toggle_button"><h4><%= element.name %></h4></label>
+                            <input type="checkbox" id="toggle_button<%= element.userIndex %>">
+                            <div id="toggle_contents<%= element.userIndex %>">
+                               <table class="patientTable"">
+                                    <tr>
+                                        <td style="background-color: #ccc">심박동수</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: #ccc">체온</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: #ccc">산소포화도</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: #ccc">심전도</td>
+                                        <td>-</td>
+                                    </tr>
+                                </table>
+                                <div class="patientMonitor" onclick="patientDetail(<%= element.userIndex %>)"><b><%= element.name %> 환자</b> 모니터링 하러가기</div>
+                            </div>
+                        <% }); %>
                         
                         <script>
                             patientDetail = (idx) => { location.href=`/doctor/<%=doctorIdx%>?patient=${idx}`; }
                         </script>
                     </div>
-                </div>
             </div>
         </section>
+
         <!-- Bootstrap core JS-->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     </body>
