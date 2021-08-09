@@ -1,18 +1,13 @@
 #include<WiFi.h>
-#include<DHT.h>
 #include<AWS_IOT.h>
 
-#define DHT_PIN 33
-#define DHT_TYPE DHT11
+#define WIFI_SSID "U+Net3D85"
+#define WIFI_PASSWD "48353543A#"
 
-#define WIFI_SSID "{wifi_ssid}"
-#define WIFI_PASSWD "{wifi_passwd}"
+#define CLIENT_ID "lily"
+#define MQTT_TOPIC "$aws/things/lily/shadow/name/lily"
+#define AWS_HOST "a2utwh13lgm1sf-ats.iot.us-east-2.amazonaws.com"
 
-#define CLIENT_ID "{client_id}"
-#define MQTT_TOPIC "{mqtt_topic}"
-#define AWS_HOST "{aws_host}"
-
-DHT dht(DHT_PIN,DHT_TYPE);
 AWS_IOT aws;
 
 void setup(){
@@ -30,7 +25,6 @@ void setup(){
 Serial.println("\n connected.\n done");
 
 Serial.print("\n initialing DHT11...");
-dht.begin();
 Serial.println("Done.");
 
 Serial.println("\n initialing connection to AWS...");
@@ -44,15 +38,8 @@ Serial.println("done\n\ndone.\n");
 }
 
 void loop(){
-  float temp=dht.readTemperature();
-
-  if(temp==NAN){
-    Serial.println("reading failed");
-  }
-  else{
     String temp_humidity="temp = ";
-    temp_humidity +=String(temp);
-    temp_humidity ="success ";
+    temp_humidity += "success ";
   
     String message="Welcome";
     char payload[40];
@@ -65,7 +52,6 @@ void loop(){
   }
   else{
     Serial.println("failed\n");
-  }
   }
   delay(1000);
 }
