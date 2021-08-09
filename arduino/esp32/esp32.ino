@@ -1,5 +1,5 @@
-#include <TimeLib.h>
-#include <timestamp32bits.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 #include<WiFi.h>
 #include <ArduinoJson.h>
 #include<AWS_IOT.h>
@@ -15,7 +15,8 @@
 #define TXp2 17
 
 AWS_IOT aws;
-timestamp32bits stamp = timestamp32bits(2000);
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "kr.pool.ntp.org", 32400,10);
 
 void setup(){
   Serial.begin(115200);
@@ -39,17 +40,26 @@ void setup(){
     Serial.println("connection failed\n make syre blabla"); 
   }
   Serial.println("done\n\ndone.\n");
+  timeClient.begin();
 }
 
 void loop(){
+  timeClient.update();
   String serial2 = Serial2.readString();
+  String epochms;
+  String epochs = String(timeClient.getEpochTime());
+  long epochMS = timeClient.mssec;
+  epochMS/100>0 ? epochms = String(epochMS) : 
+  epochMS/10>0 ? epochms = "0" + String(epochMS) : 
+  epochms = "00" + String(epochMS);
+  String epoch = epochs + epochms;
   if(serial2 != ""){
     String jsondata= "";
     StaticJsonBuffer<300> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["format"] = "json";
     root["topic"] = MQTT_TOPIC;
-    root["timestamp"] = stamp.timestamp(year(),month(),day(),hour(),minute(),second());
+    root["timestamp"] = epoch;
     root["payload"] = serial2;
     root.printTo(jsondata);
     
