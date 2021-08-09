@@ -1,12 +1,12 @@
 #include<WiFi.h>
 #include<AWS_IOT.h>
 
-#define WIFI_SSID "U+Net3D85"
-#define WIFI_PASSWD "48353543A#"
+#define WIFI_SSID "{wifi_ssid}"
+#define WIFI_PASSWD "{wifi_passwd}"
 
-#define CLIENT_ID "lily"
-#define MQTT_TOPIC "$aws/things/lily/shadow/name/lily"
-#define AWS_HOST "a2utwh13lgm1sf-ats.iot.us-east-2.amazonaws.com"
+#define CLIENT_ID "{client_id}"
+#define MQTT_TOPIC "{mqtt_topic}"
+#define AWS_HOST "{aws_host}"
 
 AWS_IOT aws;
 
