@@ -55,10 +55,8 @@ void loop(){
   String epoch = epochs + epochms;
   if(serial2 != ""){
     String jsondata= "";
-    StaticJsonBuffer<300> jsonBuffer;
+    StaticJsonBuffer<200> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-    root["format"] = "json";
-    root["topic"] = MQTT_TOPIC;
     root["timestamp"] = epoch;
     root["payload"] = serial2;
     root.printTo(jsondata);
