@@ -1,15 +1,22 @@
-//연빈, 비접촉 온도센서 & oled에도 온도값 표시
+//주은, 비접촉 온도&와이파이 코드 결합
 #include <Adafruit_MLX90614.h>  //for infrared thermometer
 #include <Adafruit_GFX.h>       // Include core graphics library for the display
 #include <Adafruit_SSD1306.h>   // Include Adafruit_SSD1306 library to drive the display
 #include <Fonts/FreeMonoBold18pt7b.h>  // Add a custom font
+#include <SoftwareSerial.h> //wifi
+
 
 Adafruit_SSD1306 display(128, 64);            //Create display
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();  //for infrared thermometer
 int temp;  // Create a variable to have something dynamic to show on the display
+SoftwareSerial mySerial(2,3); // RX, TX - wifi
+
 
 void setup()
-{                
+{     
+  Serial.begin(9600);
+  mySerial.begin(115200); //wifi
+             
   delay(100);  // This delay is needed to let the display to initialize
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // Initialize display with the I2C address of 0x3C
   display.clearDisplay();  // Clear the buffer
@@ -19,6 +26,12 @@ void setup()
 
 void loop()
 {
+  if(mySerial.available())
+  {Serial.write(mySerial.read()); } 
+  if(Serial.available())
+  {mySerial.write(Serial.read()); } //wifi
+
+  
   temp++;  // Increase value for testing
   if(temp > 43)  // If temp is greater than 150
   {
