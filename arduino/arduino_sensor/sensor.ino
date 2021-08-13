@@ -1,5 +1,4 @@
-//주은,온도센서+max30102+버튼+oled,문제-엄청 느려지고 측정 잘 안됨.
-
+//심박 시리얼 모니터에 출력
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -253,12 +252,14 @@ void setup(void) {
   sensor.setup(); 
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
 Serial.begin(9600);
-   Serial.println("Adafruit MLX90614 test");
+   Serial.println("Adafruit MLX90614 test"); //비접촉 온도 
+   
 
   if (!mlx.begin()) {
     Serial.println("Error connecting to MLX sensor. Check wiring.");
     while (1);
   };
+  
   
 }
 
@@ -271,7 +272,9 @@ void loop()  {
     
    Serial.print("Ambient = "); Serial.print(mlx.readAmbientTempC());
   Serial.print("*C\tObject = "); Serial.print(mlx.readObjectTempC()); Serial.println("*C");
+  Serial.println("심박"); ;Serial.println(beatAvg);
   Serial.println();
+  
     
     sensor.check();
     long now = millis();   //start time of this cycle
@@ -334,6 +337,7 @@ void loop()  {
         }
         Display_5();
 
+ 
     }
     // flash led for 25 ms
     if (led_on && (now - lastBeat)>25){
