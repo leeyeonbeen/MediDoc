@@ -338,16 +338,17 @@ void loop()
           Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
           Serial.print("온도 평균"); Serial.println(AVG_temp); 
           Serial.println(); 
-          delay(5000);
+          delay(1000);
           cnt+=1;
         }
       }
     }
     if(cnt==12){
       cnt= 0; 
-      oled.init();
       Serial.println("1분 끝"); 
-      oled.drawStr(0,15,F("Measurement complete"),1); 
+      oled.drawStr(0,15,F("Measurement complete"),3);
+      delay(1000);
+      oled.init();
       String jsondata= "";
       StaticJsonBuffer<200> jsonBuffer;
       JsonObject& root = jsonBuffer.createObject();
