@@ -1,5 +1,5 @@
-//심박, 산소포화도 시리얼 모니터 출력- 산소포화도값 spo2f로
-//spo2f버전
+//심박, 산소포화도 시리얼 모니터 출력 - 데이터값 출력 루틴이 5초딜레이로 총 12번 나에게 해서 1분동안 데이터 출력
+
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -146,9 +146,16 @@ uint8_t pcflag =0;
 uint8_t istate = 0;
 uint8_t sleep_counter = 0;
 
+
+int cnt =0;
+
+
+
 void button(void){
     pcflag = 1;
 }
+
+
 
 void checkbutton(){
     if (pcflag && !digitalRead(BUTTON)) {
@@ -270,16 +277,32 @@ bool led_on = false;
 
 
 void loop()  {
-    
+ 
+   if(cnt <= 12){
+    cnt +=1;
+   
    Serial.print("Ambient = "); Serial.print(mlx.readAmbientTempC());
   Serial.print("*C\tObject = "); Serial.print(mlx.readObjectTempC()); Serial.println("*C");
   Serial.println("심박: "); ;Serial.println(beatAvg);
   Serial.println("산소포화도: ");Serial.println(SPO2f); 
   Serial.println();
-  
+  delay(5000);}
+     if(cnt == 12){
+      cnt = 0;
+    }
+  if(cnt ==0){
+      oled.init();
+      Serial.println("1분 끝");
+   
+    }
     
     sensor.check();
+   
     long now = millis();   //start time of this cycle
+   
+   
+   
+  
     if (!sensor.available()) return;
     uint32_t irValue = sensor.getIR(); 
     uint32_t redValue = sensor.getRed();
