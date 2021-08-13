@@ -1,6 +1,13 @@
-//연빈,온도빼고 esp32, aws연결 코드 합친거 
+//승연, 온도센서 값 AWS출력시도 + 시리얼 모니터에도 출력
 #include<WiFi.h>
+#include<DHT.h>
 #include<AWS_IOT.h>
+#include <LM35.h>
+
+#define DHT_PIN 33
+#define DHT_TYPE DHT11
+#define RXp2 16
+#define TXp2 17
 
 #define WIFI_SSID "U5"
 #define WIFI_PASSWD "4"
@@ -9,10 +16,12 @@
 #define MQTT_TOPIC "e"
 #define AWS_HOST "m"
 
+DHT dht(DHT_PIN,DHT_TYPE);
 AWS_IOT aws;
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
   Serial.print("\ninitializing thing temp_humidity_\n");
 
   Serial.print("\n initialing wifi: connecting to ");
@@ -26,6 +35,7 @@ void setup(){
 Serial.println("\n connected.\n done");
 
 Serial.print("\n initialing DHT11...");
+dht.begin();
 Serial.println("Done.");
 
 Serial.println("\n initialing connection to AWS...");
@@ -33,15 +43,21 @@ if(aws.connect(AWS_HOST,CLIENT_ID)==0){
   Serial.println(" connected to AWS\n done.");
 }
 else{
- Serial.println("connection failed\n make syre blabla"); 
+ Serial.println("connection failed\n make system blabla"); 
 }
 Serial.println("done\n\ndone.\n");
 }
 
 void loop(){
-  
+  float temp=dht.readTemperature();
+
+  if(temp==NAN){
+    Serial.println("reading failed");
+  }
+  else{
     String temp_humidity="temp = ";
-    temp_humidity ="success ";
+    temp_humidity +=String(temp);
+    temp_humidity =(Serial2.readString());
   
     String message="Welcome";
     char payload[40];
@@ -55,6 +71,6 @@ void loop(){
   else{
     Serial.println("failed\n");
   }
-  
+  }
   delay(1000);
 }
