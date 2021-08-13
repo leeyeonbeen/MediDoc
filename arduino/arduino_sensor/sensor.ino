@@ -1,4 +1,6 @@
-//심박 시리얼 모니터에 출력
+//심박, 산소포화도 시리얼모니터 출력- 이때 산소포화도 spo2
+
+
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -272,7 +274,8 @@ void loop()  {
     
    Serial.print("Ambient = "); Serial.print(mlx.readAmbientTempC());
   Serial.print("*C\tObject = "); Serial.print(mlx.readObjectTempC()); Serial.println("*C");
-  Serial.println("심박"); ;Serial.println(beatAvg);
+  Serial.println("심박: "); ;Serial.println(beatAvg);
+  Serial.println("산소포화도: ");Serial.println(SPO2); 
   Serial.println();
   
     
