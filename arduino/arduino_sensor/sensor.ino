@@ -1,4 +1,3 @@
-//8월 4일 마지막 수정 코드 - 아마 위에서 time이 어차피 안 돌아가는 것 같길래 지운듯,,?
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -149,12 +148,6 @@ uint8_t pcflag =0;
 uint8_t istate = 0;
 uint8_t sleep_counter = 0;
 
-extern volatile unsigned long timer0_millis;
-
-
-
-int cnt=0;
-
 void button(void){
     pcflag = 1;
 }
@@ -173,12 +166,12 @@ void checkbutton(){
 void Display_5(){
    if(pcflag && !digitalRead(BUTTON)){
      draw_oled(5);
-     Serial.print(beatAvg);Serial.println("bpm");
-     Serial.print(SPO2);Serial.println("%");
-     Serial.print(mlx.readObjectTempC());Serial.println(" C");
-     delay(1000);
+     delay(2000);
+     go_sleep();
+     pcflag=1;
+     sleep_counter = 0;
    }
-   pcflag = 1;
+   pcflag = 0;
  
 
 }
@@ -244,14 +237,12 @@ void draw_oled(int msg) {
 }
 
 void setup(void) {
-
  
-  
   pinMode(LED, OUTPUT);
-  pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력 
+  pinMode(BUTTON, INPUT_PULLUP);
   filter_for_graph = EEPROM.read(OPTIONS);
   draw_Red = EEPROM.read(OPTIONS+1);
-  oled.init();  //oled초기화 
+  oled.init();
   oled.fill(0x00);
   draw_oled(3);
   delay(3000); 
@@ -261,20 +252,17 @@ void setup(void) {
   }
   sensor.setup(); 
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
- Serial.begin(9600);
+Serial.begin(9600);
+
   mlx.begin();
 }
-
 long lastBeat = 0;    //Time of the last beat 
 long displaytime = 0; //Time of the last display update
 bool led_on = false;
 
 void loop()  
 {
-    //if(digitalRead(BUTTON)==LOW){
-     
-     
-    
+  
     sensor.check();
     long now = millis();   //start time of this cycle
     if (!sensor.available()) return;
@@ -285,7 +273,6 @@ void loop()
         voltage = getVCC();
         checkbutton();
         draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message
-        //? : 是三元运算符，整个表达式根据条件返回不同的值，如果x>y为真则返回x，如果为假则返回y，之后=赋值给z。相当于:if(x>y)z=x;elsez=y
         delay(200);
         ++sleep_counter;
         if (sleep_counter>100) {
@@ -294,7 +281,6 @@ void loop()
         }
     } else {
         sleep_counter = 0;
-        cnt += 1; 
         // remove DC element移除直流元件
         int16_t IR_signal, Red_signal;
         bool beatRed, beatIR;
@@ -326,55 +312,36 @@ void loop()
             SPO2f = (10400 - RX100*17+50)/100;  
             // from table
             if ((RX100>=0) && (RX100<184))
-             SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
-             Serial.print("심박: "); Serial.println(beatAvg);
-             Serial.print("산소포화도: "); Serial.println(SPO2f);
-             Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
-             delay(1000);
+              SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+              Serial.print("심박: "); Serial.println(beatAvg);
+            Serial.print("산소포화도: "); Serial.println(SPO2f);
+            Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
+            delay(100);
         }
-             if(cnt ==1 && now-displaytime>50){
-               unsigned long time1= millis() / 1000; 
-               displaytime= now; 
-               wave.scale(); 
-               draw_oled(2);
-               
-               delay(1000); 
-               oled.drawStr(0,0,F("Time"),1); 
-               print_digit(75,0,time1);
-               //draw_oled(2); 
-             }
-        
-               // if(time1= 60){
-               //   cnt=0; }
-                if(cnt == 12){cnt = 0;}
-                if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
-
-          
-               //}
-        
-          
         // update display every 50 ms if fingerdown
-    /*  if (now-displaytime>50) {
+        if (now-displaytime>50) {
             displaytime = now;
             wave.scale();
-            draw_oled(2); */
-            
-            
+            draw_oled(2);
+   
         }
-        
         Display_5();
-        
-     //    if(cnt == 12){cnt = 0;}
-     // if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
-  
- 
-  
+  if(pcflag && !digitalRead(BUTTON)){
+    oled.init();
+  oled.fill(0x00);
+  draw_oled(3);
+  delay(3000); 
+  sensor.setup(); 
+  attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
+  Serial.begin(9600);
+  mlx.begin();
     }
-    
+ 
+    }
     // flash led for 25 ms
     if (led_on && (now - lastBeat)>25){
         digitalWrite(LED, LOW);
         led_on = false;
      }
-    }
+}
 
