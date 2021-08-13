@@ -1,4 +1,4 @@
-//주은, esp32에서 값이 가서 aws 연결 성공(버튼X)
+//주은, 온도센서 다른 코드 + AWS 연결+ 제대로 된 값 출력 시도
 #include<WiFi.h>
 #include<DHT.h>
 #include<AWS_IOT.h>
@@ -7,11 +7,11 @@
 #define DHT_PIN 33
 #define DHT_TYPE DHT11
 
-#define WIFI_SSID "T"
-#define WIFI_PASSWD "0"
+#define WIFI_SSID "U"
+#define WIFI_PASSWD "4"
 
 #define CLIENT_ID "l"
-#define MQTT_TOPIC "0"
+#define MQTT_TOPIC "e"
 #define AWS_HOST "m"
 
 DHT dht(DHT_PIN,DHT_TYPE);
