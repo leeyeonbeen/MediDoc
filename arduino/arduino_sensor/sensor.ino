@@ -338,7 +338,7 @@ void loop()
           Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
           Serial.print("온도 평균"); Serial.println(AVG_temp); 
           Serial.println(); 
-          delay(1000);
+          delay(5000);
           cnt+=1;
         }
       }
