@@ -1,4 +1,3 @@
-
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -238,6 +237,7 @@ void draw_oled(int msg) {
   } while (oled.nextPage());
 }
 
+
 void setup(void) {
   pinMode(LED, OUTPUT);
   pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력 
@@ -322,8 +322,8 @@ void loop()
           data1[i]= SPO2f; 
           data2[i] = mlx.readObjectTempC(); 
           sum_bpm += data[i]; 
-          sum_temp +=data1[i];
-          sum_O +=data2[i];
+          sum_O+=data1[i];
+          sum_temp +=data2[i];
           
           int AVG_bpm = sum_bpm/ 12;
           int AVG_temp =  sum_temp/ 12;
@@ -347,6 +347,7 @@ void loop()
       cnt= 0; 
       oled.init();
       Serial.println("1분 끝"); 
+      oled.drawStr(0,15,F("Measurement complete"),1); 
       String jsondata= "";
       StaticJsonBuffer<200> jsonBuffer;
       JsonObject& root = jsonBuffer.createObject();
