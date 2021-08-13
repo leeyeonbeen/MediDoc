@@ -1,4 +1,3 @@
-
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -225,9 +224,7 @@ void draw_oled(int msg) {
                print_digit(90,17,SPO2,' ',3,1);
                print_digit(90,25,mlx.readObjectTempC(),' ',3,1);
                break;
-       case 6: oled.drawStr(28,12,F("OFF "),1);
-               oled.drawChar(76,12,10-sleep_counter/10+'0');
-               oled.drawChar(82,12,'s');
+       case 6: oled.drawStr(28,12,F("goodbye "),1);
                break;        
                
     }
@@ -345,11 +342,13 @@ void loop()
       Serial.println("측정 결과");      
       draw_oled(5);
       delay(5000);
-      draw_oled(6);
+      draw_oled(6); // finger not down message    
+      delay(2000);
       Serial.print(beatAvg);Serial.println("bpm");
       Serial.print(SPO2);Serial.println("%");
       Serial.print(mlx.readObjectTempC());Serial.println(" C");
-      pcflag = 1;     
+      pcflag = 1;    
+      go_sleep();  
       String jsondata= "";
       StaticJsonBuffer<200> jsonBuffer;
       JsonObject& root = jsonBuffer.createObject();
