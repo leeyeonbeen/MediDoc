@@ -1,3 +1,4 @@
+
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -296,9 +297,9 @@ void loop()
         }
     } else {
         sleep_counter = 0;
-        cnt++; 
+       // cnt++; 
         // remove DC element移除直流元件
-        for(int i=1;i<=12;i++){
+       for(int i =0; i<12; i++){
         int16_t IR_signal, Red_signal;
         bool beatRed, beatIR;
         if (!filter_for_graph) {//图形过滤器
@@ -330,6 +331,10 @@ void loop()
             // from table
             if ((RX100>=0) && (RX100<184))
              SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+             if(now- displaytime>50){
+              unsigned long time1 = millis() / 1000; 
+              wave.scale();
+              draw_oled(2);
              data[i] = beatAvg; 
              sum += data[i]; 
              int AVG = sum/12;
@@ -339,13 +344,17 @@ void loop()
              Serial.print("산소포화도: "); Serial.println(SPO2f);
              Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
              delay(1000);
+             cnt+=1;
         }
+        }
+       }
+            if(cnt ==12){
+              cnt= 0; 
+              oled.init();
+              Serial.println("1분 끝"); 
+            }
       
-             if(now- displaytime>50){
-              unsigned long time1 = millis() / 1000; 
-              wave scale();
-              draw_oled(2);
-             }
+             
              
              /*if(cnt ==1 && now-displaytime>50){
                unsigned long time1= millis() / 1000; 
@@ -384,7 +393,7 @@ void loop()
   
  
   
-    }
+   
     
     // flash led for 25 ms
     if (led_on && (now - lastBeat)>25){
