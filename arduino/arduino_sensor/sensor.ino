@@ -1,3 +1,4 @@
+
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -8,7 +9,6 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
-
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -23,7 +23,6 @@
 #define OLED_RESET LED_BUILTIN
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
-
 SSD1306 oled; 
 MAX30102 sensor;
 Pulse pulseIR;
@@ -31,7 +30,7 @@ Pulse pulseRed;
 MAFilter bpm;
 
 #define LED LED_BUILTIN
-#define BUTTON 3
+//#define BUTTON 3
 #define OPTIONS 7
 
 static const uint8_t heart_bits[] PROGMEM = { 0x00, 0x00, 0x38, 0x38, 0x7c, 0x7c, 0xfe, 0xfe, 0xfe, 0xff, 
@@ -168,7 +167,10 @@ void checkbutton(){
 void Display_5(){
    if(pcflag && !digitalRead(BUTTON)){
      draw_oled(5);
-     delay(1100);
+     Serial.print(beatAvg);Serial.println("bpm");
+     Serial.print(SPO2);Serial.println("%");
+
+     delay(1000);
    }
    pcflag = 0;
  
@@ -197,22 +199,26 @@ void draw_oled(int msg) {
     switch(msg){
         case 0:  oled.drawStr(10,0,F("Device error"),1); 
                  break;
-                 
         case 1:  oled.drawStr(0,0,F("PLACE YOUR"),2); 
                  oled.drawStr(25,18,F("FINGER"),2);
-                                  
+                 
+                  
                  break;
         case 2:  print_digit(90,0,beatAvg,' ',3,1);
                  oled.drawStr(0,0,F("PULSE RATE"),1);
+           
                  oled.drawStr(0,12,F("OXYGEN"),1);
+                 
                  oled.drawStr(0,24,F("TEMP"),1);
+                
                  print_digit(90,12,SPO2f,' ',3,1);
                  oled.drawChar(116,12,'%',1);
                  print_digit(90,24,mlx.readObjectTempC(),' ',3,1);
                  
                  break;
-        case 3:  oled.drawStr(17,0,F("Hanium"),2);
-                 oled.drawStr(17,14,F("Signal"),2);              
+        case 3:  oled.drawStr(33,0,F("Pulse"),2);
+                 oled.drawStr(17,15,F("Oximeter"),2);
+               
                  //oled.drawXBMP(6,8,16,16,heart_bits);
                 
                  break;
@@ -249,7 +255,7 @@ void setup(void) {
   }
   sensor.setup(); 
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
-  Serial.begin(9600);
+Serial.begin(9600);
   mlx.begin();
 }
 
@@ -259,6 +265,7 @@ bool led_on = false;
 
 void loop()  
 {
+  
     sensor.check();
     long now = millis();   //start time of this cycle
     if (!sensor.available()) return;
@@ -269,6 +276,7 @@ void loop()
         voltage = getVCC();
         checkbutton();
         draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message
+        //? : 是三元运算符，整个表达式根据条件返回不同的值，如果x>y为真则返回x，如果为假则返回y，之后=赋值给z。相当于:if(x>y)z=x;elsez=y
         delay(200);
         ++sleep_counter;
         if (sleep_counter>100) {
@@ -277,6 +285,7 @@ void loop()
         }
     } else {
         sleep_counter = 0;
+        // remove DC element移除直流元件
         int16_t IR_signal, Red_signal;
         bool beatRed, beatIR;
         if (!filter_for_graph) {//图形过滤器
@@ -307,38 +316,23 @@ void loop()
             SPO2f = (10400 - RX100*17+50)/100;  
             // from table
             if ((RX100>=0) && (RX100<184))
-              SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+             SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+             Serial.print("심박: "); Serial.println(beatAvg);
+             Serial.print("산소포화도: "); Serial.println(SPO2f);
+             Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
+             delay(100);
         }
         // update display every 50 ms if fingerdown
         if (now-displaytime>50) {
             displaytime = now;
             wave.scale();
-           
-             if(cnt <= 12){
-    cnt +=1;
-   
-   Serial.print("Ambient = "); Serial.print(mlx.readAmbientTempC());
-  Serial.print("*C\tObject = "); Serial.print(mlx.readObjectTempC()); Serial.println("*C");
-  Serial.println("심박: "); ;Serial.println(beatAvg);
-  Serial.println("산소포화도: ");Serial.println(SPO2f); 
-  Serial.println();
-  delay(5000);}
-     if(cnt == 12){
-      cnt = 0;
-    }
-  if(cnt ==0){
-      oled.init();
-      Serial.println("1분 끝");
-   
-    }
-            
-            
-            
             draw_oled(2);
             
+            
         }
+        
         Display_5();
-
+  
  
     }
     // flash led for 25 ms
