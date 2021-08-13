@@ -149,6 +149,7 @@ uint8_t sleep_counter = 0;
 extern volatile unsigned long timer0_millis;
 
 int cnt=0;
+int cnt1=0;
 int AVG_bpm=0;
 float AVG_temp=0;
 int AVG_O=0;
@@ -173,6 +174,11 @@ void checkbutton(){
 }
 
 void go_sleep() {
+  cnt1=0;
+  cnt=0;
+  sum_bpm=0; AVG_bpm=0;
+  AVG_temp=0; sum_temp=0;
+  AVG_O=0; sum_O=0; 
   oled.fill(0);
   oled.off();
   delay(10);
@@ -223,14 +229,19 @@ void draw_oled(int msg) {
                break;
        case 6: oled.drawStr(24,0,F("Good"),2); 
                oled.drawStr(25,18,F("bye"),2);
-               break;                       
+               break;      
+       case 7: oled.drawStr(0,0,F("ATTACH"),2); 
+               oled.drawStr(25,18,F("ECG"),2); 
+               break;
     }
-  }
+  }  
   while (oled.nextPage());
 }
 
 void setup(void) {
-  pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력 
+  pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력
+  pinMode(10, INPUT); // ECG
+  pinMode(11, INPUT); //ECG
   filter_for_graph = EEPROM.read(OPTIONS);
   draw_Red = EEPROM.read(OPTIONS+1);
   oled.init();  //oled초기화 
@@ -305,7 +316,7 @@ void loop()
         unsigned long time1 = millis() / 1000; 
         wave.scale();
         draw_oled(2);
-
+       
         cnt+=1;
         sum_bpm += beatAvg; 
         //sum_O += SPO2f;
@@ -313,37 +324,27 @@ void loop()
           
         AVG_bpm = sum_bpm/cnt;
         AVG_temp =  sum_temp/cnt;
-        //AVG_O = sum_O /cnt;
-
-        //Serial.println(cnt);
-        //Serial.print("심박: "); Serial.println(beatAvg);
-        //Serial.print("심박 평균"); Serial.println(AVG_bpm); 
-             
-        //Serial.print("산소포화도: "); Serial.println(SPO2f);
-        //Serial.print("산소포화도 평균"); Serial.println(AVG_O); 
-             
-        //Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
-        //Serial.print("온도 평균"); Serial.println(AVG_temp); 
-        //Serial.println(); 
-        delay(500);  
-        if(cnt==30){
+        
+        Serial.print("ECG : ");
+        Serial.println(analogRead(A0));  
+ 
+        if(cnt==100){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(SPO2f);
-          Serial.print(", temperature : ");Serial.println(AVG_temp);
-          //Serial.println("1분 끝");
-          //Serial.println("측정 결과");      
+          Serial.print(", temperature : ");Serial.println(AVG_temp);     
           draw_oled(5);
-          delay(5000);
-          draw_oled(6); // finger not down message    
           delay(2000);
-          
+            
+          draw_oled(6);
+          cnt1=0;
           cnt=0;
           sum_bpm=0; AVG_bpm=0;
           AVG_temp=0; sum_temp=0;
           AVG_O=0; sum_O=0; 
+          delay(2000);
           
           pcflag = 1;    
-          go_sleep();  
+          go_sleep();
         }
       }
     }
