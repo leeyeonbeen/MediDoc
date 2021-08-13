@@ -1,3 +1,5 @@
+//8월 4일 2차 - 주은이 버튼 관련 코드 
+//하다가 갑자기 button선언 안됐다 함
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -29,7 +31,7 @@ Pulse pulseRed;
 MAFilter bpm;
 
 #define LED LED_BUILTIN
-#define BUTTON 3
+//#define BUTTON 3
 #define OPTIONS 7
 
 static const uint8_t heart_bits[] PROGMEM = { 0x00, 0x00, 0x38, 0x38, 0x7c, 0x7c, 0xfe, 0xfe, 0xfe, 0xff, 
@@ -139,20 +141,14 @@ private:
     
 } wave;
 
-int  beatAvg;
-int  SPO2, SPO2f;
-int  voltage;
+int  beatAvg=0;
+int  SPO2=0, SPO2f=0;
+int  voltage=0;
 bool filter_for_graph = false;
 bool draw_Red = false;
 uint8_t pcflag =0;
 uint8_t istate = 0;
 uint8_t sleep_counter = 0;
-
-extern volatile unsigned long timer0_millis;
-
-
-
-int cnt=0;
 
 void button(void){
     pcflag = 1;
@@ -174,12 +170,10 @@ void Display_5(){
      draw_oled(5);
      Serial.print(beatAvg);Serial.println("bpm");
      Serial.print(SPO2);Serial.println("%");
-     Serial.print(mlx.readObjectTempC());Serial.println(" C");
-     delay(1000);
+     delay(2000);
+     go_sleep(); 
    }
    pcflag = 1;
- 
-
 }
 
 void go_sleep() {
@@ -244,21 +238,17 @@ void draw_oled(int msg) {
 
 void setup(void) {
 
+    pinMode(LED, OUTPUT);
+  pinMode(BUTTON, INPUT_PULLUP);
  
-  
-  pinMode(LED, OUTPUT);
-  pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력 
   filter_for_graph = EEPROM.read(OPTIONS);
   draw_Red = EEPROM.read(OPTIONS+1);
-  oled.init();  //oled초기화 
+  oled.init();
   oled.fill(0x00);
   draw_oled(3);
-  delay(3000); 
-  if (!sensor.begin())  {
-    draw_oled(0);
-    while (1);
-  }
-  sensor.setup(); 
+  delay(1000); 
+  if (!sensor.begin())  {draw_oled(0); while (1);}
+  sensor.setup();
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
 Serial.begin(9600);
   mlx.begin();
@@ -269,11 +259,7 @@ long displaytime = 0; //Time of the last display update
 bool led_on = false;
 
 void loop()  
-{
-    //if(digitalRead(BUTTON)==LOW){
-      cnt += 1; 
-     
-    
+{  
     sensor.check();
     long now = millis();   //start time of this cycle
     if (!sensor.available()) return;
@@ -284,7 +270,6 @@ void loop()
         voltage = getVCC();
         checkbutton();
         draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message
-        //? : 是三元运算符，整个表达式根据条件返回不同的值，如果x>y为真则返回x，如果为假则返回y，之后=赋值给z。相当于:if(x>y)z=x;elsez=y
         delay(200);
         ++sleep_counter;
         if (sleep_counter>100) {
@@ -321,48 +306,31 @@ void loop()
             long denominator = (pulseRed.avgDC() * pulseIR.avgAC())/256;
             int RX100 = (denominator>0) ? (numerator * 100)/denominator : 999;
             // using formula
-            SPO2f = (10400 - RX100*17+50)/100;  
+            SPO2f = (10400 - RX100*17+50)/100;   
             // from table
             if ((RX100>=0) && (RX100<184))
              SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+             
              Serial.print("심박: "); Serial.println(beatAvg);
              Serial.print("산소포화도: "); Serial.println(SPO2f);
              Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
-             delay(100);
-             if(cnt ==1){
-        unsigned long time1= millis() / 1000; 
-        delay(1000); 
-        oled.drawStr(0,0,F("Time"),1); 
-        print_digit(75,0,time1);
-        draw_oled(2); 
-        
-        if(time1= 60){
-          cnt=0; }
-          
+             delay(1000);
         }
-        
-          
         // update display every 50 ms if fingerdown
-    /*  if (now-displaytime>50) {
+        if (now-displaytime>50) {
             displaytime = now;
             wave.scale();
-            draw_oled(2); */
-            
-            
+            draw_oled(2);
+                       
         }
         
         Display_5();
         
-         if(cnt == 12){cnt = 0;}
-      if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
-  
  
-  
     }
-    
     // flash led for 25 ms
     if (led_on && (now - lastBeat)>25){
         digitalWrite(LED, LOW);
         led_on = false;
      }
-    }
+}
