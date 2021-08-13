@@ -1,4 +1,4 @@
-
+//8월 4일 마지막 수정 코드 - 아마 위에서 time이 어차피 안 돌아가는 것 같길래 지운듯,,?
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -331,6 +331,7 @@ void loop()
              Serial.print("산소포화도: "); Serial.println(SPO2f);
              Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
              delay(1000);
+        }
              if(cnt ==1 && now-displaytime>50){
                unsigned long time1= millis() / 1000; 
                displaytime= now; 
@@ -341,14 +342,15 @@ void loop()
                oled.drawStr(0,0,F("Time"),1); 
                print_digit(75,0,time1);
                //draw_oled(2); 
+             }
         
-                if(time1= 60){
-                  cnt=0; }
+               // if(time1= 60){
+               //   cnt=0; }
                 if(cnt == 12){cnt = 0;}
                 if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
 
           
-               }
+               //}
         
           
         // update display every 50 ms if fingerdown
@@ -375,3 +377,4 @@ void loop()
         led_on = false;
      }
     }
+
