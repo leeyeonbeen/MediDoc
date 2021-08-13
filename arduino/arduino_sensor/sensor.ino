@@ -1,16 +1,17 @@
-//주은, 와이파이+온도값+AWS 전송 시도
-#include"WiFi.h"
-#include"DHT.h"
-#include"AWS_IOT.h"
+//주은, esp32에서 값이 가서 aws 연결 성공(버튼X)
+#include<WiFi.h>
+#include<DHT.h>
+#include<AWS_IOT.h>
+#include <LM35.h>
 
 #define DHT_PIN 33
 #define DHT_TYPE DHT11
 
-#define WIFI_SSID "---"
-#define WIFI_PASSWD "---"
+#define WIFI_SSID "T"
+#define WIFI_PASSWD "0"
 
-#define CLIENT_ID "l--"
-#define MQTT_TOPIC "---"
+#define CLIENT_ID "l"
+#define MQTT_TOPIC "0"
 #define AWS_HOST "m"
 
 DHT dht(DHT_PIN,DHT_TYPE);
@@ -22,20 +23,19 @@ void setup(){
 
   Serial.print("\n initialing wifi: connecting to ");
   Serial.println(WIFI_SSID);
-  WiFi.begin(WIFI_SSID,WIFI_PASSWD);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWD);
   Serial.print(" ");
   while(WiFi.status()!=WL_CONNECTED){
    Serial.print(".");
   delay(500);
-  }
-  
+  } 
 Serial.println("\n connected.\n done");
+
 Serial.print("\n initialing DHT11...");
 dht.begin();
 Serial.println("Done.");
 
 Serial.println("\n initialing connection to AWS...");
-
 if(aws.connect(AWS_HOST,CLIENT_ID)==0){
   Serial.println(" connected to AWS\n done.");
 }
@@ -54,7 +54,7 @@ void loop(){
   else{
     String temp_humidity="temp = ";
     temp_humidity +=String(temp);
-    temp_humidity ="C ";
+    temp_humidity ="success ";
   
     String message="Welcome";
     char payload[40];
