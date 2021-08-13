@@ -91,53 +91,49 @@ const uint8_t MAXWAVE = 72;
 class Waveform {
   public:
     Waveform(void) {wavep = 0;}
-
-      void record(int waveval) {
-        waveval = waveval/8;         // scale to fit in byte  缩放以适合字节
-        waveval += 128;              //shift so entired waveform is +ve  
-        waveval = waveval<0? 0 : waveval;
-        waveform[wavep] = (uint8_t) (waveval>255)?255:waveval; 
-        wavep = (wavep+1) % MAXWAVE;
-      }
+    void record(int waveval) {
+      waveval = waveval/8;         // scale to fit in byte  缩放以适合字节
+      waveval += 128;              //shift so entired waveform is +ve  
+      waveval = waveval<0? 0 : waveval;
+      waveform[wavep] = (uint8_t) (waveval>255)?255:waveval; 
+      wavep = (wavep+1) % MAXWAVE;
+    }
   
-      void scale() {
-        uint8_t maxw = 0;
-        uint8_t minw = 255;
-        for (int i=0; i<MAXWAVE; i++) { 
-          maxw = waveform[i]>maxw?waveform[i]:maxw;
-          minw = waveform[i]<minw?waveform[i]:minw;
-        }
-        uint8_t scale8 = (maxw-minw)/4 + 1;  //scale * 8 to preserve precision
-        uint8_t index = wavep;
-        for (int i=0; i<MAXWAVE; i++) {
-          disp_wave[i] = 31-((uint16_t)(waveform[index]-minw)*8)/scale8;
-          index = (index + 1) % MAXWAVE;
-        }
+    void scale() {
+      uint8_t maxw = 0;
+      uint8_t minw = 255;
+      for (int i=0; i<MAXWAVE; i++) { 
+        maxw = waveform[i]>maxw?waveform[i]:maxw;
+        minw = waveform[i]<minw?waveform[i]:minw;
       }
-
-void draw(uint8_t X) {
-  for (int i=0; i<MAXWAVE; i++) {
-    uint8_t y = disp_wave[i];
-    oled.drawPixel(X+i, y);
-    if (i<MAXWAVE-1) {
-      uint8_t nexty = disp_wave[i+1];
-      if (nexty>y) {
-        for (uint8_t iy = y+1; iy<nexty; ++iy)  
-        oled.drawPixel(X+i, iy);
-        } 
-        else if (nexty<y) {
-          for (uint8_t iy = nexty+1; iy<y; ++iy)  
-          oled.drawPixel(X+i, iy);
-          }
+      uint8_t scale8 = (maxw-minw)/4 + 1;  //scale * 8 to preserve precision
+      uint8_t index = wavep;
+      for (int i=0; i<MAXWAVE; i++) {
+        disp_wave[i] = 31-((uint16_t)(waveform[index]-minw)*8)/scale8;
+        index = (index + 1) % MAXWAVE;
+      }
+    }
+    void draw(uint8_t X) {
+      for (int i=0; i<MAXWAVE; i++) {
+        uint8_t y = disp_wave[i];
+        oled.drawPixel(X+i, y);
+        if (i<MAXWAVE-1) {
+          uint8_t nexty = disp_wave[i+1];
+          if (nexty>y) {
+            for (uint8_t iy = y+1; iy<nexty; ++iy)  
+              oled.drawPixel(X+i, iy);
+          } 
+          else if (nexty<y) {
+            for (uint8_t iy = nexty+1; iy<y; ++iy)  
+            oled.drawPixel(X+i, iy);
+         }
        }
-    } 
-}
-
-private:
-    uint8_t waveform[MAXWAVE];
-    uint8_t disp_wave[MAXWAVE];
-    uint8_t wavep = 0;
-    
+     } 
+   }
+ private:
+   uint8_t waveform[MAXWAVE];
+   uint8_t disp_wave[MAXWAVE];
+   uint8_t wavep = 0;
 } wave;
 
 int  beatAvg;
@@ -169,93 +165,79 @@ void button(void){
 }
 
 void checkbutton(){
-    if (pcflag && !digitalRead(BUTTON)) {
-      istate = (istate +1) % 4;
-      filter_for_graph = istate & 0x01;
-      draw_Red = istate & 0x02;
-      EEPROM.write(OPTIONS, filter_for_graph);
-      EEPROM.write(OPTIONS+1, draw_Red);
-    }
-    pcflag = 0;
+  if (pcflag && !digitalRead(BUTTON)) {
+    istate = (istate +1) % 4;
+    filter_for_graph = istate & 0x01;
+    draw_Red = istate & 0x02;
+    EEPROM.write(OPTIONS, filter_for_graph);
+    EEPROM.write(OPTIONS+1, draw_Red);
+  }
+  pcflag = 0;
 }
 
 void Display_5(){
-   if(pcflag && !digitalRead(BUTTON)){
-     draw_oled(5);
-     Serial.print(beatAvg);Serial.println("bpm");
-     Serial.print(SPO2);Serial.println("%");
-     Serial.print(mlx.readObjectTempC());Serial.println(" C");
-     delay(1000);
-   }
-   pcflag = 1;
- 
-
+ if(pcflag && !digitalRead(BUTTON)){
+   draw_oled(5);
+   Serial.print(beatAvg);Serial.println("bpm");
+   Serial.print(SPO2);Serial.println("%");
+   Serial.print(mlx.readObjectTempC());Serial.println(" C");
+   delay(1000);
+ }
+ pcflag = 1;
 }
 
 void go_sleep() {
-    oled.fill(0);
-    oled.off();
-    delay(10);
-    sensor.off();
-    delay(10);
-    cbi(ADCSRA, ADEN);  // disable adc
-    delay(10);
-    pinMode(0,INPUT);
-    pinMode(2,INPUT);
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
-    sleep_mode();  // sleep until button press 
-    // cause reset
-    setup();
+  oled.fill(0);
+  oled.off();
+  delay(10);
+  sensor.off();
+  delay(10);
+  cbi(ADCSRA, ADEN);  // disable adc
+  delay(10);
+  pinMode(0,INPUT);
+  pinMode(2,INPUT);
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
+  sleep_mode();  // sleep until button press 
+  // cause reset
+  setup();
 }
 
 void draw_oled(int msg) {
-    oled.firstPage();
-    do{
+  oled.firstPage();
+  do{
     switch(msg){
-        case 0:  oled.drawStr(10,0,F("Device error"),1); 
-                 break;
-        case 1:  oled.drawStr(0,0,F("PLACE YOUR"),2); 
-                 oled.drawStr(25,18,F("FINGER"),2);
-                 
-                  
-                 break;
-        case 2:  print_digit(90,0,beatAvg,' ',3,1);
-                 oled.drawStr(0,0,F("PULSE RATE"),1);
-           
-                 oled.drawStr(0,12,F("OXYGEN"),1);
-                 
-                 oled.drawStr(0,24,F("TEMP"),1);
-                
-                 print_digit(90,12,SPO2f,' ',3,1);
-                 oled.drawChar(116,12,'%',1);
-                 print_digit(90,24,mlx.readObjectTempC(),' ',3,1);
-                 
-                 break;
-        case 3:  oled.drawStr(33,0,F("Pulse"),2);
-                 oled.drawStr(17,15,F("Oximeter"),2);
-               
-                 //oled.drawXBMP(6,8,16,16,heart_bits);
-                
-                 break;
-        case 4:  oled.drawStr(28,12,F("OFF IN"),1);
-                 oled.drawChar(76,12,10-sleep_counter/10+'0');
-                 oled.drawChar(82,12,'s');
-                 break;
-        case 5:  oled.drawStr(0,0,F("Avg Pulse"),1); 
-                 print_digit(75,0,beatAvg);
-                 oled.drawStr(0,15,F("AVG OXYGEN"),1); 
-                 oled.drawStr(0,22,F("saturation"),1); 
-                 print_digit(75,15,SPO2);
-                
-                 break;
-        }
-    } while (oled.nextPage());
+      case 0:  oled.drawStr(10,0,F("Device error"),1); 
+               break;
+      case 1:  oled.drawStr(0,0,F("PLACE YOUR"),2); 
+               oled.drawStr(25,18,F("FINGER"),2);      
+               break;
+      case 2:  print_digit(90,0,beatAvg,' ',3,1);
+               oled.drawStr(0,0,F("PULSE RATE"),1);
+               oled.drawStr(0,12,F("OXYGEN"),1);
+               oled.drawStr(0,24,F("TEMP"),1);
+               print_digit(90,12,SPO2f,' ',3,1);
+               oled.drawChar(116,12,'%',1);
+               print_digit(90,24,mlx.readObjectTempC(),' ',3,1);
+               break;
+      case 3:  oled.drawStr(33,0,F("Pulse"),2);
+               oled.drawStr(17,15,F("Oximeter"),2);
+               //oled.drawXBMP(6,8,16,16,heart_bits);
+               break;
+      case 4:  oled.drawStr(28,12,F("OFF IN"),1);
+               oled.drawChar(76,12,10-sleep_counter/10+'0');
+               oled.drawChar(82,12,'s');
+               break;
+      case 5:  oled.drawStr(0,0,F("Avg Pulse"),1); 
+               print_digit(75,0,beatAvg);
+               oled.drawStr(0,15,F("AVG OXYGEN"),1); 
+               oled.drawStr(0,22,F("saturation"),1); 
+               print_digit(75,15,SPO2);
+               break;
+    }
+  } while (oled.nextPage());
 }
 
 void setup(void) {
-
- 
-  
   pinMode(LED, OUTPUT);
   pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력 
   filter_for_graph = EEPROM.read(OPTIONS);
@@ -270,7 +252,7 @@ void setup(void) {
   }
   sensor.setup(); 
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
- Serial.begin(9600);
+  Serial.begin(9600);
   mlx.begin();
 }
 
@@ -280,143 +262,95 @@ bool led_on = false;
 
 void loop()  
 {
-    //if(digitalRead(BUTTON)==LOW){
-     
-     
-    
-    sensor.check();
-    long now = millis();   //start time of this cycle
-    if (!sensor.available()) return;
-    uint32_t irValue = sensor.getIR(); 
-    uint32_t redValue = sensor.getRed();
-    sensor.nextSample();
-    if (irValue<5000) {
-        voltage = getVCC();
-        checkbutton();
-        draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message
-        //? : 是三元运算符，整个表达式根据条件返回不同的值，如果x>y为真则返回x，如果为假则返回y，之后=赋值给z。相当于:if(x>y)z=x;elsez=y
-        delay(200);
-        ++sleep_counter;
-        if (sleep_counter>100) {
-          go_sleep(); 
-          sleep_counter = 0;
-        }
-    } else {
-        sleep_counter = 0;
-       // cnt++; 
-        // remove DC element移除直流元件
-       for(int i =0; i<12; i++){
-        int16_t IR_signal, Red_signal;
-        bool beatRed, beatIR;
-        if (!filter_for_graph) {//图形过滤器
-           IR_signal =  pulseIR.dc_filter(irValue) ;
-           Red_signal = pulseRed.dc_filter(redValue);
-           beatRed = pulseRed.isBeat(pulseRed.ma_filter(Red_signal));
-           beatIR =  pulseIR.isBeat(pulseIR.ma_filter(IR_signal));        
-        } else {
-           IR_signal =  pulseIR.ma_filter(pulseIR.dc_filter(irValue)) ;
-           Red_signal = pulseRed.ma_filter(pulseRed.dc_filter(redValue));
-           beatRed = pulseRed.isBeat(Red_signal);
-           beatIR =  pulseIR.isBeat(IR_signal);
-        }
-        // invert waveform to get classical BP waveshape
-        wave.record(draw_Red ? -Red_signal : -IR_signal ); 
-        // check IR or Red for heartbeat     
-        if (draw_Red ? beatRed : beatIR){
-            long btpm = 60000/(now - lastBeat);
-            if (btpm > 0 && +btpm < 200) beatAvg = bpm.filter((int16_t)btpm);
-            lastBeat = now; 
-            digitalWrite(LED, HIGH); 
-            led_on = true;
-            // compute SpO2 ratio
-            long numerator   = (pulseRed.avgAC() * pulseIR.avgDC())/256;
-            long denominator = (pulseRed.avgDC() * pulseIR.avgAC())/256;
-            int RX100 = (denominator>0) ? (numerator * 100)/denominator : 999;
-            // using formula
-            SPO2f = (10400 - RX100*17+50)/100;  
-            // from table
-            if ((RX100>=0) && (RX100<184))
-             SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
-             if(now- displaytime>50){
-              unsigned long time1 = millis() / 1000; 
-              wave.scale();
-              draw_oled(2);
-             data[i] = beatAvg; 
-             data1[i]= SPO2f; 
-             data2[i] = mlx.readObjectTempC(); 
-             
-             sum_bpm += data[i]; 
-             sum_temp +=data1[i];
-             sum_O +=data2[i];
-
-             int AVG_bpm = sum_bpm/ 12;
-             int AVG_temp =  sum_temp/ 12;
-             int AVG_O = sum_O /12;
-
-             Serial.print("심박: "); Serial.println(beatAvg);
-             Serial.print("심박 평균"); Serial. println(AVG_bpm); 
-             
-             Serial.print("산소포화도: "); Serial.println(SPO2f);
-             Serial.print("산소포화도 평균"); Serial. println(AVG_O); 
-             
-             Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
-             Serial.print("온도 평균"); Serial.println(AVG_temp); 
-             Serial.println(); 
-             delay(1000);
-             cnt+=1;
-        }
-        }
-       }
-            if(cnt ==12){
-              cnt= 0; 
-              oled.init();
-              Serial.println("1분 끝"); 
-            }
-      
-             
-             
-             /*if(cnt ==1 && now-displaytime>50){
-               unsigned long time1= millis() / 1000; 
-               displaytime= now; 
-               wave.scale(); 
-               draw_oled(2);
-               
-               delay(1000); 
-               oled.drawStr(0,0,F("Time"),1); 
-               print_digit(75,0,time1);
-               //draw_oled(2); 
-             } */
-        
-               // if(time1= 60){
-               //   cnt=0; }
-              //  if(cnt == 12){cnt = 0;}
-              //  if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
-
-          
-               //}
-        
-          
-        // update display every 50 ms if fingerdown
-    /*  if (now-displaytime>50) {
-            displaytime = now;
-            wave.scale();
-            draw_oled(2); */
-            
-            
-        }
-        
-        Display_5();
-        
-     //    if(cnt == 12){cnt = 0;}
-     // if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
-  
- 
-  
-   
-    
-    // flash led for 25 ms
-    if (led_on && (now - lastBeat)>25){
-        digitalWrite(LED, LOW);
-        led_on = false;
-     }
+  sensor.check();
+  long now = millis();   //start time of this cycle
+  if (!sensor.available()) return;
+  uint32_t irValue = sensor.getIR(); 
+  uint32_t redValue = sensor.getRed();
+  sensor.nextSample();
+  if (irValue<5000) {
+    voltage = getVCC();
+    checkbutton();
+    draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message    
+    delay(200);
+    ++sleep_counter;
+    if (sleep_counter>100) {
+      go_sleep(); 
+      sleep_counter = 0;
     }
+  } 
+  else {
+    sleep_counter = 0;
+    for(int i =0; i<12; i++){
+      int16_t IR_signal, Red_signal;
+      bool beatRed, beatIR;
+      if (!filter_for_graph) {
+        IR_signal =  pulseIR.dc_filter(irValue) ;
+        Red_signal = pulseRed.dc_filter(redValue);
+        beatRed = pulseRed.isBeat(pulseRed.ma_filter(Red_signal));
+        beatIR =  pulseIR.isBeat(pulseIR.ma_filter(IR_signal));        
+      } else {
+        IR_signal =  pulseIR.ma_filter(pulseIR.dc_filter(irValue)) ;
+        Red_signal = pulseRed.ma_filter(pulseRed.dc_filter(redValue));
+        beatRed = pulseRed.isBeat(Red_signal);
+        beatIR =  pulseIR.isBeat(IR_signal);
+      }
+      // invert waveform to get classical BP waveshape
+      wave.record(draw_Red ? -Red_signal : -IR_signal ); 
+      // check IR or Red for heartbeat     
+      if (draw_Red ? beatRed : beatIR){
+        long btpm = 60000/(now - lastBeat);
+        if (btpm > 0 && +btpm < 200) beatAvg = bpm.filter((int16_t)btpm);
+        lastBeat = now; 
+        digitalWrite(LED, HIGH); 
+        led_on = true;
+        // compute SpO2 ratio
+        long numerator   = (pulseRed.avgAC() * pulseIR.avgDC())/256;
+        long denominator = (pulseRed.avgDC() * pulseIR.avgAC())/256;
+        int RX100 = (denominator>0) ? (numerator * 100)/denominator : 999;
+        // using formula
+        SPO2f = (10400 - RX100*17+50)/100;  
+        // from table
+        if ((RX100>=0) && (RX100<184))
+          SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+        if(now- displaytime>50){
+          unsigned long time1 = millis() / 1000; 
+          wave.scale();
+          draw_oled(2);
+          data[i] = beatAvg; 
+          data1[i]= SPO2f; 
+          data2[i] = mlx.readObjectTempC(); 
+          sum_bpm += data[i]; 
+          sum_temp +=data1[i];
+          sum_O +=data2[i];
+          
+          int AVG_bpm = sum_bpm/ 12;
+          int AVG_temp =  sum_temp/ 12;
+          int AVG_O = sum_O /12;
+
+          Serial.print("심박: "); Serial.println(beatAvg);
+          Serial.print("심박 평균"); Serial. println(AVG_bpm); 
+             
+          Serial.print("산소포화도: "); Serial.println(SPO2f);
+          Serial.print("산소포화도 평균"); Serial. println(AVG_O); 
+             
+          Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
+          Serial.print("온도 평균"); Serial.println(AVG_temp); 
+          Serial.println(); 
+          delay(1000);
+          cnt+=1;
+        }
+      }
+    }
+    if(cnt ==12){
+      cnt= 0; 
+      oled.init();
+      Serial.println("1분 끝"); 
+    }   
+  }
+  Display_5();   
+  if (led_on && (now - lastBeat)>25){
+    digitalWrite(LED, LOW);
+    led_on = false;
+  }
+}
