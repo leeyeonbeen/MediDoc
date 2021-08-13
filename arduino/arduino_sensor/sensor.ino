@@ -1,87 +1,52 @@
-//주은, 아두이노 와이파이+비접촉 온도센서+시리얼 모니터에 값 출력 
-#include <ESP8266wifi.h>
-#include <SoftwareSerial.h>
-#include <Adafruit_MLX90614.h>  //for infrared thermometer
-#include <Adafruit_GFX.h>       // Include core graphics library for the display
-#include <Adafruit_SSD1306.h>   // Include Adafruit_SSD1306 library to drive the display
-#include <Fonts/FreeMonoBold18pt7b.h>  // Add a custom font
+//승연, AWS값 송출을 위한 MAX30102 새로운 코드 시도
+#include <Wire.h>
+#include "MAX30100_PulseOximeter.h"
 
-Adafruit_SSD1306 display(128, 64);            //Create display
-Adafruit_MLX90614 mlx = Adafruit_MLX90614();  //for infrared thermometer
-int temp;  // Create a variable to have something dynamic to show on the display
-SoftwareSerial mySerial(2,3); //RX, TX
+#define REPORTING_PERIOD_MS     1000
 
+PulseOximeter pox;    //  맥박, 산소포화도 관련 객체 생성
 
-void setup() 
-{ 
-  Serial.begin(9600); 
-  mySerial.begin(9600); 
+uint32_t tsLastReport = 0;
 
-  delay(100);  // This delay is needed to let the display to initialize
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // Initialize display with the I2C address of 0x3C
-  display.clearDisplay();  // Clear the buffer
-  display.setTextColor(WHITE);  // Set color of the text
-  mlx.begin();  //start infrared thermometer
-  
-} 
-  
-void loop() 
-{ 
-  if(mySerial.available()) 
-  { 
-    Serial.write(mySerial.read()); 
-  } 
-  if(Serial.available()) 
-  { 
-    mySerial.write(Serial.read()); 
-  } 
+// 콜백함수, 맥박이 감지되면 실행될 함수
+void onBeatDetected()
+{
+    Serial.println("Beat!");
+}
 
-temp++;  // Increase value for testing
-  if(temp > 43)  // If temp is greater than 150
-  {
-    temp = 0;  // Set temp to 0
-  }
+void setup()
+{
+    Serial.begin(115200);
 
-  temp = mlx.readObjectTempC(); //comment this line if you want to test
+    Serial.print("Initializing pulse oximeter..");
 
-  display.clearDisplay();  // Clear the display so we can refresh
+    // 맥박, 산소포화도 관련 객체 초기화
 
-  // Print text:
-  display.setFont();
-  display.setCursor(45,10);  // (x,y)
-  display.println("TEMPERATURE");  // Text or value to print
+    if (!pox.begin()) {
+        Serial.println("FAILED");
+        for(;;);
+    } else {
+        Serial.println("SUCCESS");
+    }
 
-  // Print temperature
-  char string[10];  // Create a character array of 10 characters
-  // Convert float to a string:
-  dtostrf(temp, 3, 0, string);  // (<variable>,<amount of digits we are going to use>,<amount of decimal digits>,<string name>)
-  
-  display.setFont(&FreeMonoBold18pt7b);  // Set a custom font
-  display.setCursor(20,50);  // (x,y)
-  display.println(string);  // Text or value to print
-  display.setCursor(90,50);  // (x,y)
-  display.println("C");  // Text or value to print
-  display.setCursor(77,32);  // (x,y)
-  display.println(".");  // Text or value to print
+   
+    // 콜백함수 등록
+    pox.setOnBeatDetectedCallback(onBeatDetected);
+}
 
-  Serial.print("Deg C = "); 
-   Serial.println(string);
+void loop()
+{
+    // 센서값을 계속 최신화
+    pox.update();
 
-  
-  // Draw a filled circle:
-  display.fillCircle(18, 55, 7, WHITE);  // Draw filled circle (x,y,radius,color). X and Y are the coordinates for the center point
+    // 1초에 한번씩 시리얼 모니터에 값을 출력
+    if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
+        Serial.print("Heart rate:");
+        Serial.print(pox.getHeartRate());
+        Serial.print("bpm / SpO2:");
+        Serial.print(pox.getSpO2());
+        Serial.println("%");
 
-  // Draw rounded rectangle:
-  display.drawRoundRect(16, 3, 5, 49, 2, WHITE);  // Draw rounded rectangle (x,y,width,height,radius,color)
-                                                  // It draws from the location to down-right
-    // Draw ruler step
-  for (int i = 6; i<=45; i=i+3){
-    display.drawLine(21, i, 22, i, WHITE);  // Draw line (x0,y0,x1,y1,color)
-  }
-  
-  //Draw temperature
-  temp = temp*0.43; //ratio for show
-  display.drawLine(18, 46, 18, 46-temp, WHITE);  // Draw line (x0,y0,x1,y1,color)
-
-  display.display();  // Print everything we set previously 
+        tsLastReport = millis();
+    }
 }
