@@ -219,10 +219,10 @@ void draw_oled(int msg) {
                break;
       case 5:  oled.drawStr(0,0,F("Measurement complete"),1);
                oled.drawStr(0,7,F("Avg Pulse"),1); 
-               print_digit(75,7,beatAvg);
+               print_digit(75,7,beatAvg,1,1);
                oled.drawStr(0,15,F("AVG OXYGEN"),1); 
                oled.drawStr(0,22,F("saturation"),1); 
-               print_digit(75,15,SPO2);
+               print_digit(75,15,SPO2,1,1);
                break;
     }
   } while (oled.nextPage());
@@ -330,26 +330,21 @@ void loop()
           Serial.println(); 
           delay(1000);
           cnt+=1;
-          return AVG_bpm;
-          return AVG_temp;
-          return AVG_O; 
+        
          
         }
        
       }
     }
     if(cnt==12){
-      Serial.print("심박, 산소, 온도 평균:"); 
-      Serial.println(AVG_bpm);
-      Serial.println("1분 끝");     
+     
+      Serial.println("1분 끝");
+      Serial.println("측정 결과");      
       draw_oled(5);
       Serial.print(beatAvg);Serial.println("bpm");
       Serial.print(SPO2);Serial.println("%");
       Serial.print(mlx.readObjectTempC());Serial.println(" C");
-      delay(1000);
       pcflag = 1;     
-      delay(1000);
-      oled.init();
       String jsondata= "";
       StaticJsonBuffer<200> jsonBuffer;
       JsonObject& root = jsonBuffer.createObject();
@@ -362,6 +357,9 @@ void loop()
       char payload[200];
       jsondata.toCharArray(payload,200);
       Serial.println(payload);
+      delay(1000);
+      oled.init();
+      
     }   
   }
   
