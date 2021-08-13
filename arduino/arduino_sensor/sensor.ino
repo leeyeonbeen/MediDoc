@@ -152,11 +152,17 @@ uint8_t sleep_counter = 0;
 extern volatile unsigned long timer0_millis;
 
 int data[12]; 
-
+int data1[12]; 
+int data2[12]; 
 
 int cnt=0;
-int AVG; 
-int sum; 
+int AVG_bpm;
+int AVG_temp;
+int AVG_O;
+
+int sum_bpm;
+int sum_temp;
+int sum_O;
 
 void button(void){
     pcflag = 1;
@@ -336,13 +342,26 @@ void loop()
               wave.scale();
               draw_oled(2);
              data[i] = beatAvg; 
-             sum += data[i]; 
-             int AVG = sum/12;
+             data1[i]= SPO2f; 
+             data2[i] = mlx.readObjectTempC(); 
+             
+             sum_bpm += data[i]; 
+             sum_temp +=data1[i];
+             sum_O +=data2[i];
+
+             int AVG_bpm = sum_bpm/ 12;
+             int AVG_temp =  sum_temp/ 12;
+             int AVG_O = sum_O /12;
+
              Serial.print("심박: "); Serial.println(beatAvg);
-             Serial.print("평균"); Serial. println(AVG); 
+             Serial.print("심박 평균"); Serial. println(AVG_bpm); 
              
              Serial.print("산소포화도: "); Serial.println(SPO2f);
+             Serial.print("산소포화도 평균"); Serial. println(AVG_O); 
+             
              Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
+             Serial.print("온도 평균"); Serial.println(AVG_temp); 
+             Serial.println(); 
              delay(1000);
              cnt+=1;
         }
