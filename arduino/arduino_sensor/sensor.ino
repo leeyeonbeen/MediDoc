@@ -225,6 +225,11 @@ void draw_oled(int msg) {
                print_digit(90,17,SPO2,' ',3,1);
                print_digit(90,25,mlx.readObjectTempC(),' ',3,1);
                break;
+       case 6: oled.drawStr(28,12,F("OFF "),1);
+               oled.drawChar(76,12,10-sleep_counter/10+'0');
+               oled.drawChar(82,12,'s');
+               break;        
+               
     }
   } while (oled.nextPage());
 }
@@ -340,12 +345,7 @@ void loop()
       Serial.println("측정 결과");      
       draw_oled(5);
       delay(5000);
-      draw_oled(4);
-       delay(200);
-    ++sleep_counter;
-    if (sleep_counter>100) {
-      go_sleep(); 
-      sleep_counter = 0;
+      draw_oled(6);
       Serial.print(beatAvg);Serial.println("bpm");
       Serial.print(SPO2);Serial.println("%");
       Serial.print(mlx.readObjectTempC());Serial.println(" C");
@@ -370,5 +370,4 @@ void loop()
     digitalWrite(LED, LOW);
     led_on = false;
   }
-}
 }
