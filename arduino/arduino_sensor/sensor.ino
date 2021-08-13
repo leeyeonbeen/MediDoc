@@ -1,4 +1,3 @@
-
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -30,7 +29,7 @@ Pulse pulseRed;
 MAFilter bpm;
 
 #define LED LED_BUILTIN
-//#define BUTTON 3
+#define BUTTON 3
 #define OPTIONS 7
 
 static const uint8_t heart_bits[] PROGMEM = { 0x00, 0x00, 0x38, 0x38, 0x7c, 0x7c, 0xfe, 0xfe, 0xfe, 0xff, 
@@ -149,6 +148,12 @@ uint8_t pcflag =0;
 uint8_t istate = 0;
 uint8_t sleep_counter = 0;
 
+extern volatile unsigned long timer0_millis;
+
+
+
+int cnt=0;
+
 void button(void){
     pcflag = 1;
 }
@@ -169,10 +174,10 @@ void Display_5(){
      draw_oled(5);
      Serial.print(beatAvg);Serial.println("bpm");
      Serial.print(SPO2);Serial.println("%");
-
+     Serial.print(mlx.readObjectTempC());Serial.println(" C");
      delay(1000);
    }
-   pcflag = 0;
+   pcflag = 1;
  
 
 }
@@ -242,10 +247,10 @@ void setup(void) {
  
   
   pinMode(LED, OUTPUT);
-  pinMode(BUTTON, INPUT_PULLUP);
+  pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력 
   filter_for_graph = EEPROM.read(OPTIONS);
   draw_Red = EEPROM.read(OPTIONS+1);
-  oled.init();
+  oled.init();  //oled초기화 
   oled.fill(0x00);
   draw_oled(3);
   delay(3000); 
@@ -265,7 +270,10 @@ bool led_on = false;
 
 void loop()  
 {
-  
+    //if(digitalRead(BUTTON)==LOW){
+      cnt += 1; 
+     
+    
     sensor.check();
     long now = millis();   //start time of this cycle
     if (!sensor.available()) return;
@@ -321,23 +329,40 @@ void loop()
              Serial.print("산소포화도: "); Serial.println(SPO2f);
              Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
              delay(100);
+             if(cnt ==1){
+        unsigned long time1= millis() / 1000; 
+        delay(1000); 
+        oled.drawStr(0,0,F("Time"),1); 
+        print_digit(75,0,time1);
+        draw_oled(2); 
+        
+        if(time1= 60){
+          cnt=0; }
+          
         }
+        
+          
         // update display every 50 ms if fingerdown
-        if (now-displaytime>50) {
+    /*  if (now-displaytime>50) {
             displaytime = now;
             wave.scale();
-            draw_oled(2);
+            draw_oled(2); */
             
             
         }
         
         Display_5();
+        
+         if(cnt == 12){cnt = 0;}
+      if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
   
  
+  
     }
+    
     // flash led for 25 ms
     if (led_on && (now - lastBeat)>25){
         digitalWrite(LED, LOW);
         led_on = false;
      }
-}
+    }
