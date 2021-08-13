@@ -9,6 +9,7 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
+#include <ArduinoJson.h>
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -327,7 +328,7 @@ void loop()
           int AVG_bpm = sum_bpm/ 12;
           int AVG_temp =  sum_temp/ 12;
           int AVG_O = sum_O /12;
-
+          
           Serial.print("심박: "); Serial.println(beatAvg);
           Serial.print("심박 평균"); Serial. println(AVG_bpm); 
              
@@ -342,10 +343,22 @@ void loop()
         }
       }
     }
-    if(cnt ==12){
+    if(cnt==12){
       cnt= 0; 
       oled.init();
       Serial.println("1분 끝"); 
+      String jsondata= "";
+      StaticJsonBuffer<200> jsonBuffer;
+      JsonObject& root = jsonBuffer.createObject();
+      root["heartRate"] = beatAvg;
+      root["heartRateAVG"] = AVG_bpm;
+      root["oxygenSaturation"] = SPO2f;
+      root["temperature"] = mlx.readObjectTempC();
+      root.printTo(jsondata);
+
+      char payload[200];
+      jsondata.toCharArray(payload,200);
+      Serial.println(payload);
     }   
   }
   Display_5();   
