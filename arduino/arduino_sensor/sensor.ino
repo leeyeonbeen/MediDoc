@@ -1,4 +1,3 @@
-
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -329,8 +328,8 @@ void loop()
         delay(500);  
         if(cnt==30){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
-          Serial.print(" ,spo2 : "); Serial.print(SPO2f);
-          Serial.print(" ,temperature : ");Serial.println(AVG_temp);
+          Serial.print(", spo2 : "); Serial.print(SPO2f);
+          Serial.print(", temperature : ");Serial.println(AVG_temp);
           //Serial.println("1분 끝");
           //Serial.println("측정 결과");      
           draw_oled(5);
