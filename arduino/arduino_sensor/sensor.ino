@@ -218,11 +218,12 @@ void draw_oled(int msg) {
                oled.drawChar(82,12,'s');
                break;
       case 5:  oled.drawStr(0,0,F("Measurement complete"),1);
-               oled.drawStr(0,7,F("Avg Pulse"),1); 
-               print_digit(75,7,beatAvg,1,1);
-               oled.drawStr(0,15,F("AVG OXYGEN"),1); 
-               oled.drawStr(0,22,F("saturation"),1); 
-               print_digit(75,15,SPO2,1,1);
+               oled.drawStr(0,9,F("Avg Pulse"),1); 
+               print_digit(90,9,beatAvg,' ',3,1);
+               oled.drawStr(0,17,F("AVG OXYGEN"),1); 
+               oled.drawStr(0,25,F("temp"),1); 
+               print_digit(90,17,SPO2,' ',3,1);
+               print_digit(90,25,mlx.readObjectTempC(),' ',3,1);
                break;
     }
   } while (oled.nextPage());
@@ -329,18 +330,22 @@ void loop()
           Serial.print("온도 평균"); Serial.println(AVG_temp); 
           Serial.println(); 
           delay(1000);
-          cnt+=1;
-        
-         
+          cnt+=1;         
         }
        
       }
     }
     if(cnt==12){
-     
       Serial.println("1분 끝");
       Serial.println("측정 결과");      
       draw_oled(5);
+      delay(5000);
+      draw_oled(4);
+       delay(200);
+    ++sleep_counter;
+    if (sleep_counter>100) {
+      go_sleep(); 
+      sleep_counter = 0;
       Serial.print(beatAvg);Serial.println("bpm");
       Serial.print(SPO2);Serial.println("%");
       Serial.print(mlx.readObjectTempC());Serial.println(" C");
@@ -357,16 +362,13 @@ void loop()
       char payload[200];
       jsondata.toCharArray(payload,200);
       Serial.println(payload);
-      delay(1000);
-      oled.init();
       
     }   
   }
-  
 
-    
   if (led_on && (now - lastBeat)>25){
     digitalWrite(LED, LOW);
     led_on = false;
   }
+}
 }
