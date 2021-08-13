@@ -1,18 +1,22 @@
-//연빈,DHT센서 관련 코드를 뺀 only esp32-aws
+//연빈, only 와이파이+AWS연결 다시 정리한 코드
 #include<WiFi.h>
 #include<AWS_IOT.h>
 
-#define WIFI_SSID "U5"
-#define WIFI_PASSWD "4"
+#define WIFI_SSID ""
+#define WIFI_PASSWD ""
 
-#define CLIENT_ID "ly"
-#define MQTT_TOPIC "ly"
-#define AWS_HOST "am"
+#define CLIENT_ID ""
+#define MQTT_TOPIC ""
+#define AWS_HOST ""
+
+#define RXp2 16
+#define TXp2 17
 
 AWS_IOT aws;
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
   Serial.print("\ninitializing thing temp_humidity_\n");
 
   Serial.print("\n initialing wifi: connecting to ");
@@ -25,9 +29,6 @@ void setup(){
   } 
 Serial.println("\n connected.\n done");
 
-Serial.print("\n initialing DHT11...");
-Serial.println("Done.");
-
 Serial.println("\n initialing connection to AWS...");
 if(aws.connect(AWS_HOST,CLIENT_ID)==0){
   Serial.println(" connected to AWS\n done.");
@@ -39,8 +40,7 @@ Serial.println("done\n\ndone.\n");
 }
 
 void loop(){
-    String temp_humidity="temp = ";
-    temp_humidity += "success ";
+    String temp_humidity = Serial2.readString();
   
     String message="Welcome";
     char payload[40];
