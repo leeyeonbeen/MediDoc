@@ -150,18 +150,12 @@ uint8_t sleep_counter = 0;
 
 extern volatile unsigned long timer0_millis;
 
-
 int data[12]; 
 
 
 int cnt=0;
 int AVG; 
 int sum; 
-
-
-
-int cnt=0;
-
 
 void button(void){
     pcflag = 1;
@@ -302,11 +296,7 @@ void loop()
         }
     } else {
         sleep_counter = 0;
-
         cnt++; 
-
-        cnt += 1; 
-
         // remove DC element移除直流元件
         for(int i=1;i<=12;i++){
         int16_t IR_signal, Red_signal;
@@ -340,21 +330,24 @@ void loop()
             // from table
             if ((RX100>=0) && (RX100<184))
              SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
-
              data[i] = beatAvg; 
              sum += data[i]; 
              int AVG = sum/12;
              Serial.print("심박: "); Serial.println(beatAvg);
              Serial.print("평균"); Serial. println(AVG); 
-
-             Serial.print("심박: "); Serial.println(beatAvg);
-
+             
              Serial.print("산소포화도: "); Serial.println(SPO2f);
              Serial.print("온도: "); Serial.print(mlx.readObjectTempC());Serial.println(" C");
              delay(1000);
         }
-     }
-             if(cnt ==1 && now-displaytime>50){
+      
+             if(now- displaytime>50){
+              unsigned long time1 = millis() / 1000; 
+              wave scale();
+              draw_oled(2);
+             }
+             
+             /*if(cnt ==1 && now-displaytime>50){
                unsigned long time1= millis() / 1000; 
                displaytime= now; 
                wave.scale(); 
@@ -364,12 +357,12 @@ void loop()
                oled.drawStr(0,0,F("Time"),1); 
                print_digit(75,0,time1);
                //draw_oled(2); 
-             }
+             } */
         
                // if(time1= 60){
                //   cnt=0; }
-                if(cnt == 12){cnt = 0;}
-                if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
+              //  if(cnt == 12){cnt = 0;}
+              //  if(cnt ==0){oled.drawStr(0,0,F("Time out"),1);}
 
           
                //}
