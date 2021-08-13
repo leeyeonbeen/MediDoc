@@ -1,139 +1,58 @@
-//승연 , max30100(심박,산소포화도)+oled표시
+//연빈, max30102 참고코드
 #include <Wire.h>
-#include "MAX30100_PulseOximeter.h"
+#include "MAX30105.h"
 
-#include <Adafruit_GFX.h>    
-#include <Adafruit_ST7735.h>
-#include <SPI.h>
+MAX30105 particleSensor;
 
-
-#define TFT_CS         8
-#define TFT_DC         9
-#define TFT_RST        10 
-
-#define REPORTING_PERIOD_MS     1000
-
-
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
-
-PulseOximeter pox;    //  맥박, 산소포화도 관련 객체 생성
-
-uint32_t tsLastReport = 0;      //시간 저장용 변수
-
-volatile boolean beatDetect = false;     //맥감감지 여부 확인 변수, 초기는 미감지로 설정
-
-
-const unsigned char heart [] PROGMEM = {    //심장 표시용 이미지 픽셀 정보
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf8, 0x7e, 0x00, 0x03, 0xec, 0xc7, 0x00, 
-  0x07, 0xe7, 0xff, 0x80, 0x07, 0xff, 0xff, 0x80, 0x07, 0xff, 0xff, 0x80, 0x07, 0xff, 0xff, 0x80, 
-  0x07, 0xff, 0xff, 0x80, 0x07, 0xff, 0xff, 0x80, 0x07, 0xff, 0xff, 0x80, 0x03, 0xff, 0xff, 0x00, 
-  0x01, 0xff, 0xfe, 0x00, 0x00, 0xff, 0xfc, 0x00, 0x00, 0x7f, 0xf8, 0x00, 0x00, 0x3f, 0xf0, 0x00, 
-  0x00, 0x1f, 0xe0, 0x00, 0x00, 0x0f, 0xc0, 0x00, 0x00, 0x07, 0x80, 0x00, 0x00, 0x03, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-
-const unsigned char O2 [] PROGMEM = {     //산소 표시용 이미지 픽셀 정보
-
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x3e, 0x00, 0x00, 0x00, 0xff, 0x80, 0x00, 0x01, 0xe3, 0xc0, 0x00, 
-  0x01, 0xc1, 0xc0, 0x00, 0x03, 0x80, 0xc0, 0x00, 0x03, 0x80, 0xee, 0x00, 0x03, 0x80, 0xff, 0x00, 
-  0x03, 0x80, 0xf3, 0x00, 0x01, 0x81, 0xc6, 0x00, 0x01, 0xe3, 0xcc, 0x00, 0x00, 0xff, 0x9e, 0x00, 
-  0x00, 0x3e, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-
-
-// 콜백함수, 맥박이 감지되면 실행될 함수
-void onBeatDetected()
-{
-    Serial.println("Beat!");
-    beatDetect = true;          // 맥감감지여부를 감지로 설정
-}
+long startTime;
+long samplesTaken = 0; //Counter for calculating the Hz or read rate
 
 void setup()
 {
+  Serial.begin(115200);
+  Serial.println("Initializing...");
 
-    tft.initR(INITR_144GREENTAB);          //tft디스플레이 초기화
-    tft.fillScreen(ST77XX_WHITE);    
-    tft.setTextColor(ST77XX_BLACK); 
-    tft.setTextSize(2); 
-    tft.drawBitmap(0, 30, heart, 30, 30, ST77XX_RED);     //심장이미지 그리기
-    tft.drawBitmap(0, 60, O2, 30, 30, ST77XX_BLUE);       //산소 이미지 그리기
+  // Initialize sensor
+  if (particleSensor.begin(Wire, I2C_SPEED_FAST) == false) //Use default I2C port, 400kHz speed
+  {
+    Serial.println("MAX30105 was not found. Please check wiring/power. ");
+    while (1);
+  }
 
-    delay(100);
-  
-    Serial.begin(115200);
+  //Setup to sense up to 18 inches, max LED brightness
+  byte ledBrightness = 0xFF; //Options: 0=Off to 255=50mA
+  byte sampleAverage = 4; //Options: 1, 2, 4, 8, 16, 32
+  byte ledMode = 2; //Options: 1 = Red only, 2 = Red + IR, 3 = Red + IR + Green
+  int sampleRate = 400; //Options: 50, 100, 200, 400, 800, 1000, 1600, 3200
+  int pulseWidth = 411; //Options: 69, 118, 215, 411
+  int adcRange = 2048; //Options: 2048, 4096, 8192, 16384
 
-    Serial.print("Initializing pulse oximeter..");
+  particleSensor.setup(ledBrightness, sampleAverage, ledMode, sampleRate, pulseWidth, adcRange); //Configure sensor with these settings
+//  particleSensor.setup(); //Configure sensor. Use 6.4mA for LED drive
 
-    // 맥박, 산소포화도 관련 객체 초기화
-
-    if (!pox.begin()) {
-        Serial.println("FAILED");
-        for(;;);
-    } else {
-        Serial.println("SUCCESS");
-    }
-
-   
-    // 콜백함수 등록
-    pox.setOnBeatDetectedCallback(onBeatDetected);
-
-   
+  startTime = millis();
 }
 
 void loop()
 {
-    // 센서값을 계속 최신화
-    pox.update();
+  particleSensor.check(); //Check the sensor, read up to 3 samples
 
-    // 1초에 한번씩 맥박여부를 감지해서 맥박이 감지되었다면 화면에 표시
-    if (millis() - tsLastReport > REPORTING_PERIOD_MS) 
-    {
-        if(beatDetect==true)    //맥박감지시
-        { 
-          static int heartRate;
-          static int spO2;
-          eraseText(heartRate, spO2);      // 이전에 표시했던 문자 지우기
-          heartRate = pox.getHeartRate();   //심장박동수 얻어오기
-          spO2 = pox.getSpO2();            // 산소포화도 얻어오기
-          
-          Serial.print("Heart rate:");        //심장 박동수 및 산소포화도 표시하기
-          Serial.print(heartRate);
-          Serial.print("bpm / SpO2:");
-          Serial.print(spO2);
-          Serial.println("%");
-          tft.setTextColor(ST77XX_BLACK);
-          tft.setCursor(30,35);
-          tft.print(heartRate);
-          tft.print("bpm");
-          tft.setCursor(30,65);
-          tft.print(spO2);
-          tft.print("%");
-          
-          tsLastReport = millis();
-          beatDetect=false;
-        
-        }
-        
-    }
-}
+  while (particleSensor.available()) //do we have new data?
+  {
+    samplesTaken++;
 
+    Serial.print(" R[");
+    Serial.print(particleSensor.getFIFORed());
+    Serial.print("] IR[");
+    Serial.print(particleSensor.getFIFOIR());
+    Serial.print("] G[");
+    Serial.print(particleSensor.getFIFOGreen());
+    Serial.print("] Hz[");
+    Serial.print((float)samplesTaken / ((millis() - startTime) / 1000.0), 2);
+    Serial.print("]");
 
-void eraseText(int heartRate, int spO2)    // 이전 표시 문자 지우기 함수
-{
-  tft.setTextColor(ST77XX_WHITE);
-  tft.setCursor(30,35);
-  tft.print(heartRate);
-  tft.print("bpm");
-  tft.setCursor(30,65);
-  tft.print(spO2);
-  tft.print("%");
-  
+    Serial.println();
+
+    particleSensor.nextSample(); //We're finished with this sample so move to next sample
+  }
 }
