@@ -1,3 +1,4 @@
+
 #include "ssd1306h.h"
 #include "MAX30102.h"
 #include "Pulse.h"
@@ -175,17 +176,6 @@ void checkbutton(){
   pcflag = 0;
 }
 
-void Display_5(){
- if(pcflag && !digitalRead(BUTTON)){
-   draw_oled(5);
-   Serial.print(beatAvg);Serial.println("bpm");
-   Serial.print(SPO2);Serial.println("%");
-   Serial.print(mlx.readObjectTempC());Serial.println(" C");
-   delay(1000);
- }
- pcflag = 1;
-}
-
 void go_sleep() {
   oled.fill(0);
   oled.off();
@@ -227,8 +217,9 @@ void draw_oled(int msg) {
                oled.drawChar(76,12,10-sleep_counter/10+'0');
                oled.drawChar(82,12,'s');
                break;
-      case 5:  oled.drawStr(0,0,F("Avg Pulse"),1); 
-               print_digit(75,0,beatAvg);
+      case 5:  oled.drawStr(0,0,F("Measurement complete"),1);
+               oled.drawStr(0,7,F("Avg Pulse"),1); 
+               print_digit(75,7,beatAvg);
                oled.drawStr(0,15,F("AVG OXYGEN"),1); 
                oled.drawStr(0,22,F("saturation"),1); 
                print_digit(75,15,SPO2);
@@ -236,7 +227,6 @@ void draw_oled(int msg) {
     }
   } while (oled.nextPage());
 }
-
 
 void setup(void) {
   pinMode(LED, OUTPUT);
@@ -340,13 +330,24 @@ void loop()
           Serial.println(); 
           delay(1000);
           cnt+=1;
+          return AVG_bpm;
+          return AVG_temp;
+          return AVG_O; 
+         
         }
+       
       }
     }
     if(cnt==12){
-      cnt= 0; 
-      Serial.println("1분 끝"); 
-      oled.drawStr(0,15,F("Measurement complete"),3);
+      Serial.print("심박, 산소, 온도 평균:"); 
+      Serial.println(AVG_bpm);
+      Serial.println("1분 끝");     
+      draw_oled(5);
+      Serial.print(beatAvg);Serial.println("bpm");
+      Serial.print(SPO2);Serial.println("%");
+      Serial.print(mlx.readObjectTempC());Serial.println(" C");
+      delay(1000);
+      pcflag = 1;     
       delay(1000);
       oled.init();
       String jsondata= "";
@@ -363,7 +364,9 @@ void loop()
       Serial.println(payload);
     }   
   }
-  Display_5();   
+  
+
+    
   if (led_on && (now - lastBeat)>25){
     digitalWrite(LED, LOW);
     led_on = false;
