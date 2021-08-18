@@ -138,7 +138,7 @@ class Waveform {
 } wave;
 
 int  beatAvg;
-int  SPO2, SPO2f;
+int  SPO2, SPO2f, SPO2m;
 int  voltage;
 bool filter_for_graph = false;
 bool draw_Red = false;
@@ -157,6 +157,10 @@ int AVG_O=0;
 int sum_bpm;
 int sum_temp;
 int sum_O;
+
+long lastBeat = 0;    //Time of the last beat 
+long displaytime = 0; //Time of the last display update
+
 
 void button(void){
     pcflag = 1;
@@ -211,8 +215,8 @@ void draw_oled(int msg) {
                oled.drawStr(0,24,F("Temp"),1);
                print_digit(90,24,mlx.readObjectTempC(),' ',3,1);               
                break;
-      case 3:  oled.drawStr(33,0,F("Pulse"),2);
-               oled.drawStr(17,15,F("Oximeter"),2);
+      case 3:  oled.drawStr(5,0,F("Biometrics"),2);
+               oled.drawStr(0,15,F("Measurement"),2);
                //oled.drawXBMP(6,8,16,16,heart_bits);
                break;
       case 4:  oled.drawStr(28,12,F("OFF IN"),1);
@@ -223,15 +227,16 @@ void draw_oled(int msg) {
                oled.drawStr(0,9,F("Avg Pulse"),1); 
                print_digit(90,9,AVG_bpm,' ',3,1);
                oled.drawStr(0,17,F("Avg Oxygen"),1); 
-               print_digit(90,17,SPO2f,' ',3,1);
+               print_digit(90,17,AVG_O,' ',3,1);
                oled.drawStr(0,25,F("Temp"),1); 
                print_digit(90,25,AVG_temp,' ',3,1);               
                break;
        case 6: oled.drawStr(24,0,F("Good"),2); 
                oled.drawStr(25,18,F("bye"),2);
+         
                break;      
-       case 7: oled.drawStr(0,0,F("ATTACH"),2); 
-               oled.drawStr(25,18,F("ECG"),2); 
+       case 7: oled.drawStr(25,0,F("ATTACH"),2); 
+               oled.drawStr(45,18,F("ECG"),2); 
                break;
     }
   }  
@@ -248,6 +253,8 @@ void setup(void) {
   oled.fill(0x00);
   draw_oled(3);
   delay(3000); 
+  draw_oled(7);
+  delay(2000); 
   if (!sensor.begin())  {
     draw_oled(0);
     while (1);
@@ -255,11 +262,8 @@ void setup(void) {
   sensor.setup(); 
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
   Serial.begin(9600);
-  mlx.begin();
+  mlx.begin(); 
 }
-
-long lastBeat = 0;    //Time of the last beat 
-long displaytime = 0; //Time of the last display update
 
 void loop()  
 {
@@ -275,6 +279,7 @@ void loop()
     draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message    
     delay(200);
     ++sleep_counter;
+    
     if (sleep_counter>100) {
       go_sleep(); 
       sleep_counter = 0;
@@ -285,13 +290,13 @@ void loop()
     int16_t IR_signal, Red_signal;
     bool beatRed, beatIR;
     if (!filter_for_graph) {
-      IR_signal =  pulseIR.dc_filter(irValue) ;
+      IR_signal = pulseIR.dc_filter(irValue) ;
       Red_signal = pulseRed.dc_filter(redValue);
       beatRed = pulseRed.isBeat(pulseRed.ma_filter(Red_signal));
       beatIR =  pulseIR.isBeat(pulseIR.ma_filter(IR_signal));        
     } 
     else {
-      IR_signal =  pulseIR.ma_filter(pulseIR.dc_filter(irValue)) ;
+      IR_signal = pulseIR.ma_filter(pulseIR.dc_filter(irValue)) ;
       Red_signal = pulseRed.ma_filter(pulseRed.dc_filter(redValue));
       beatRed = pulseRed.isBeat(Red_signal);
       beatIR =  pulseIR.isBeat(IR_signal);
@@ -308,41 +313,40 @@ void loop()
       long denominator = (pulseRed.avgDC() * pulseIR.avgAC())/256;
       int RX100 = (denominator>0) ? (numerator * 100)/denominator : 999;
       // using formula
-      SPO2f = (10400 - RX100*17+50)/100;  
+      SPO2m=10400 - RX100*17+50;
+      SPO2f = (10400 - RX100*17+50)/100; 
       // from table
       if ((RX100>=0) && (RX100<184))
         SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
-      if(now- displaytime>50){
+      if(now-displaytime>50){
         unsigned long time1 = millis() / 1000; 
         wave.scale();
         draw_oled(2);
        
         cnt+=1;
         sum_bpm += beatAvg; 
-        //sum_O += SPO2f;
         sum_temp += mlx.readObjectTempC();
+        sum_O += SPO2m;
+        
           
         AVG_bpm = sum_bpm/cnt;
+        AVG_O = sum_O/cnt;
         AVG_temp =  sum_temp/cnt;
         
-        Serial.print("ECG : ");
-        Serial.println(analogRead(A0));  
+        Serial.print("  ECG : ");
+        Serial.println(analogRead(A0)); 
+
+        delay(50); 
  
         if(cnt==100){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(SPO2f);
           Serial.print(", temperature : ");Serial.println(AVG_temp);     
           draw_oled(5);
-          delay(2000);
-            
+          delay(3000);
+
           draw_oled(6);
-          cnt1=0;
-          cnt=0;
-          sum_bpm=0; AVG_bpm=0;
-          AVG_temp=0; sum_temp=0;
-          AVG_O=0; sum_O=0; 
           delay(2000);
-          
           pcflag = 1;    
           go_sleep();
         }
