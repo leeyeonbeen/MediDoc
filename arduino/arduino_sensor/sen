@@ -140,7 +140,7 @@ void draw(uint8_t X) {
 
 int  beatAvg;
 int  SPO2, SPO2f, SPO2m;
-int  voltage;
+int  voltage, i;
 bool filter_for_graph = false;
 bool draw_Red = false;
 uint8_t pcflag =0;
