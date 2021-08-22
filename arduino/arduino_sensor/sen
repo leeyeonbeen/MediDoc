@@ -114,7 +114,7 @@ class Waveform {
         index = (index + 1) % MAXWAVE;
       }
     }
-    void draw(uint8_t X) {
+void draw(uint8_t X) {
       for (int i=0; i<MAXWAVE; i++) {
         uint8_t y = disp_wave[i];
         oled.drawPixel(X+i, y);
@@ -130,7 +130,8 @@ class Waveform {
          }
        }
      } 
-   }
+}
+
  private:
    uint8_t waveform[MAXWAVE];
    uint8_t disp_wave[MAXWAVE];
@@ -325,6 +326,7 @@ void loop()
       // from table
       if ((RX100>=0) && (RX100<184))
         SPO2 = pgm_read_byte_near(&spo2_table[RX100]);
+    
       if(now-displaytime>50){
         unsigned long time1 = millis() / 1000; 
         wave.scale();
@@ -337,6 +339,7 @@ void loop()
           
         AVG_bpm = sum_bpm/cnt;
         AVG_O = sum_O/cnt;
+        AVG_O = AVG_O/100;
         AVG_temp =  sum_temp/cnt;
         
         Serial.print("  ECG : ");
@@ -359,4 +362,5 @@ void loop()
       }
     }
   }
+  restart();
 }
