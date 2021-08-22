@@ -166,6 +166,14 @@ void button(void){
     pcflag = 1;
 }
 
+void restart(){
+   if(pcflag && !digitalRead(BUTTON)){
+     setup();
+    }
+   pcflag = 0;
+}
+
+
 void checkbutton(){
   if (pcflag && !digitalRead(BUTTON)) {
     istate = (istate +1) % 4;
@@ -195,7 +203,6 @@ void go_sleep() {
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
   sleep_mode();  // sleep until button press 
   // cause reset
-  setup();
 }
 
 void draw_oled(int msg) {
@@ -325,9 +332,8 @@ void loop()
        
         cnt+=1;
         sum_bpm += beatAvg; 
-        sum_temp += mlx.readObjectTempC();
         sum_O += SPO2m;
-        
+        sum_temp += mlx.readObjectTempC();
           
         AVG_bpm = sum_bpm/cnt;
         AVG_O = sum_O/cnt;
