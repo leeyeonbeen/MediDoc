@@ -349,9 +349,7 @@ void loop()
                       
         AVG_bpm = sum_bpm/cnt;        
         AVG_temp =  sum_temp/cnt;
-       
-        Serial.print("measuring : ");
-        Serial.println(cnt); 
+
          cnt+=1;
         E[cnt]=analogRead(A0);
         delay(100); 
@@ -361,11 +359,11 @@ void loop()
           Serial.print(", spo2 : "); Serial.print(SPO2f);
           Serial.print(", temperature : ");Serial.print(AVG_temp);     
           
-          
+          Serial.print(", ECG : ");
           for(i=0;i<=cnt;i++){
-            Serial.print(", ECG : "); 
-          Serial.print(E[i]);} 
-          
+         
+          Serial.print(E[i]);
+            Serial.print(" ");} 
           draw_oled(5);
           delay(3000);
           draw_oled(6);
