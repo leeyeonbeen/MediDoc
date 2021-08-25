@@ -9,6 +9,8 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <ArduinoJson.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
@@ -22,6 +24,8 @@
 
 #define OLED_RESET LED_BUILTIN
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
+#define QUEUE_SIZE 64
 
 SSD1306 oled; 
 MAX30102 sensor;
@@ -86,6 +90,93 @@ void print_digit(int x, int y, long val, char c=' ', uint8_t field = 3,const int
  *   Record, scale  and display PPG Wavefoem
  */
 const uint8_t MAXWAVE = 72;
+
+typedef struct Queue {
+  int queue[QUEUE_SIZE]; // 큐
+  int front = -1;        // front, rear 초기값
+  int rear = -1;
+}Queue;
+
+Queue Q;// 큐 생성
+
+bool isEmpty()
+{
+  if (Q.front == Q.rear)
+    return true;
+  else return false;
+}
+
+//포화 확인
+bool isFull()
+{
+  if (Q.rear == QUEUE_SIZE - 1)
+    return true;
+  else return false;
+}
+int front()
+{
+  if (isEmpty()) {
+    printf("Queue is Empty\n");
+    return 0;
+  }
+  else return Q.queue[Q.front + 1];
+}
+
+// 마지막 원소 rear반환
+int back()
+{
+  if (isEmpty()) {
+    printf("Queue is Empty\n");
+    return 0;
+  }
+  else return Q.queue[Q.rear];
+}
+// 원소 삽입
+void push(int data)
+{
+  if (isFull()) {
+    printf("Queue is Full\n");
+    return;
+  }
+  else {
+    Q.rear++;
+    Q.queue[Q.rear] = data;
+  }
+
+}
+
+// 원소 삭제
+void pop()
+{
+  if (isEmpty()) {
+    printf("Queue is Empty\n");
+    return;
+  }
+  else {
+    Q.front++;
+  }
+}
+
+// 큐의 요소의 개수가 사이즈
+int size()
+{
+  int tmp = Q.rear - Q.front;
+  return tmp;
+}
+
+// 큐에 저장된 요소 출력
+void printQueue()
+{
+  if (isEmpty()) {
+    printf("Queue is Empty\n");
+    return;
+  }
+  for (int i = Q.front + 1; i <= Q.rear; ++i) {
+    printf("ECG : ", Q.queue[i]);
+    printf("%d ", Q.queue[i]);
+  }
+}
+
 
 class Waveform {
   public:
@@ -158,6 +249,9 @@ int AVG_O=0;
 int sum_bpm=0;
 int sum_temp=0;
 int sum_O=0;
+long lastBeat = 0;    //Time of the last beat 
+long displaytime = 0; //Time of the last display update
+bool led_on = false;
 
 void button(void){
     pcflag = 1;
@@ -193,15 +287,15 @@ void go_sleep() {
   delay(10);
   pinMode(0,INPUT);
   pinMode(2,INPUT);
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
-  sleep_mode();  // sleep until button press 
-  // cause reset
-  setup();
   timer0_millis=0;
   cnt1=0; cnt=0;
   sum_bpm=0; AVG_bpm=0;
   AVG_temp=0; sum_temp=0;
-  AVG_O=0; sum_O=0; 
+  AVG_O=0; sum_O=0;
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
+  sleep_mode();  // sleep until button press 
+  // cause reset
+  setup(); 
 }
 
 
@@ -272,15 +366,11 @@ void setup(void) {
   mlx.begin(); 
 }
 
-long lastBeat = 0;    //Time of the last beat 
-long displaytime = 0; //Time of the last display update
-bool led_on = false;
 
 void loop()  
 {
   sensor.check();
   long now = millis();   //start time of this cycle
-  unsigned long time1 = millis() / 1000;
   if (!sensor.available()) return;
   uint32_t irValue = sensor.getIR(); 
   uint32_t redValue = sensor.getRed();
@@ -317,8 +407,8 @@ void loop()
     // check IR or Red for heartbeat     
     if (draw_Red ? beatRed : beatIR){
       long btpm = 60000/(now - lastBeat);
-      if (btpm > 0 && +btpm < 200){ 
-        beatAvg = bpm.filter((int16_t)btpm);}
+      if (btpm > 0 && +btpm < 200)
+        beatAvg = bpm.filter((int16_t)btpm);
       lastBeat = now;
       digitalWrite(LED, HIGH); 
       led_on = true; 
@@ -328,30 +418,27 @@ void loop()
       int RX100 = (denominator>0) ? (numerator * 100)/denominator : 999;
       // using formula
       SPO2m = 10400 - RX100*17+50;
-      SPO2f = (10400 - RX100*17+50)/100; 
-        sum_bpm += beatAvg; 
-        sum_O += SPO2m;
-        sum_temp += mlx.readObjectTempC();
-          
-        AVG_bpm = sum_bpm/cnt;
-        AVG_O = sum_O/cnt;
-        AVG_O = AVG_O/100;
-        AVG_temp =  sum_temp/cnt;  
+      SPO2f = (10400 - RX100*17+50)/100;  
       // from table
       if ((RX100>=0) && (RX100<184)){
         SPO2 = pgm_read_byte_near(&spo2_table[RX100]);}
     } 
       if(now-displaytime>50){
-      displaytime = now;
+       
       wave.scale();
       draw_oled(2);
-      }
-        restart();
-    }
-        if (led_on && (now - lastBeat)>25){
-        digitalWrite(LED, LOW);
-        led_on = false;
-     }
+      unsigned long time1 = millis() / 1000;
+        cnt+=1;
+        sum_bpm += beatAvg; 
+        sum_O += SPO2m;
+        sum_temp += mlx.readObjectTempC();  
+        AVG_bpm = sum_bpm/cnt;
+        AVG_O = sum_O/cnt;
+        AVG_O = AVG_O/100;
+        AVG_temp =  sum_temp/cnt; 
+    
+      restart();
+   
         if(cnt==10){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(AVG_O);
@@ -362,6 +449,9 @@ void loop()
          
           draw_oled(6);
           delay(2000);
+          pcflag = 1;
           go_sleep();
         }
+      }
+  }
 }
