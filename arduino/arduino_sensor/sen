@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -25,7 +26,14 @@
 #define OLED_RESET LED_BUILTIN
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
-#define QUEUE_SIZE 64
+#define MAX_QUEUE_SIZE 100
+
+typedef int element;
+typedef struct {
+   element queue[MAX_QUEUE_SIZE];
+   int front, rear;
+} QueueType;
+
 
 SSD1306 oled; 
 MAX30102 sensor;
@@ -89,94 +97,48 @@ void print_digit(int x, int y, long val, char c=' ', uint8_t field = 3,const int
 /*
  *   Record, scale  and display PPG Wavefoem
  */
+void error(char *message)
+{
+  fprintf(stderr,"%s\n",message);
+  exit(1);
+  }
+void init(QueueType *q)
+{
+   q -> front = q -> rear = 0;
+}
+
+int is_empty(QueueType *q)
+{
+   return (q->front == q->rear);
+}
+
+int is_full(QueueType *q)
+{
+   return ((q->rear+1)%MAX_QUEUE_SIZE == q->front);
+}
+
+void enqueue(QueueType *q, element item)
+{
+   if(is_full(q))
+      error("Queue is full");
+   q->rear = (q->front+1)%MAX_QUEUE_SIZE;
+   q->queue[q->rear]=item;
+}
+element dequeue(QueueType *q)
+{
+  if(is_empty(q))
+  error("Queue is empty");
+  q->front = (q->front+1)%MAX_QUEUE_SIZE;
+  return q->queue[q->front];
+  }
+element peek(QueueType *q)
+{
+  if(is_empty(q))
+  error("Queue is empty");
+  return q->queue[(q->front+1)%MAX_QUEUE_SIZE];
+ }
+
 const uint8_t MAXWAVE = 72;
-
-typedef struct Queue {
-  int queue[QUEUE_SIZE]; // 큐
-  int front = -1;        // front, rear 초기값
-  int rear = -1;
-}Queue;
-
-Queue Q;// 큐 생성
-
-bool isEmpty()
-{
-  if (Q.front == Q.rear)
-    return true;
-  else return false;
-}
-
-//포화 확인
-bool isFull()
-{
-  if (Q.rear == QUEUE_SIZE - 1)
-    return true;
-  else return false;
-}
-int front()
-{
-  if (isEmpty()) {
-    printf("Queue is Empty\n");
-    return 0;
-  }
-  else return Q.queue[Q.front + 1];
-}
-
-// 마지막 원소 rear반환
-int back()
-{
-  if (isEmpty()) {
-    printf("Queue is Empty\n");
-    return 0;
-  }
-  else return Q.queue[Q.rear];
-}
-// 원소 삽입
-void push(int data)
-{
-  if (isFull()) {
-    printf("Queue is Full\n");
-    return;
-  }
-  else {
-    Q.rear++;
-    Q.queue[Q.rear] = data;
-  }
-
-}
-
-// 원소 삭제
-void pop()
-{
-  if (isEmpty()) {
-    printf("Queue is Empty\n");
-    return;
-  }
-  else {
-    Q.front++;
-  }
-}
-
-// 큐의 요소의 개수가 사이즈
-int size()
-{
-  int tmp = Q.rear - Q.front;
-  return tmp;
-}
-
-// 큐에 저장된 요소 출력
-void printQueue()
-{
-  if (isEmpty()) {
-    printf("Queue is Empty\n");
-    return;
-  }
-  for (int i = Q.front + 1; i <= Q.rear; ++i) {
-    printf("ECG : ", Q.queue[i]);
-    printf("%d ", Q.queue[i]);
-  }
-}
-
 
 class Waveform {
   public:
@@ -205,7 +167,7 @@ class Waveform {
         index = (index + 1) % MAXWAVE;
       }
     }
-void draw(uint8_t X) {
+    void draw(uint8_t X) {
       for (int i=0; i<MAXWAVE; i++) {
         uint8_t y = disp_wave[i];
         oled.drawPixel(X+i, y);
@@ -221,8 +183,7 @@ void draw(uint8_t X) {
          }
        }
      } 
-}
-
+   }
  private:
    uint8_t waveform[MAXWAVE];
    uint8_t disp_wave[MAXWAVE];
@@ -231,12 +192,13 @@ void draw(uint8_t X) {
 
 int  beatAvg;
 int  SPO2, SPO2f, SPO2m;
-int  voltage, i;
+int  voltage;
 bool filter_for_graph = false;
 bool draw_Red = false;
 uint8_t pcflag =0;
 uint8_t istate = 0;
 uint8_t sleep_counter = 0;
+QueueType q;
 
 extern volatile unsigned long timer0_millis;
 
@@ -245,10 +207,12 @@ int cnt1=0;
 int AVG_bpm=0;
 float AVG_temp=0;
 int AVG_O=0;
+int i=0;
+int sum_bpm;
+int sum_temp;
+int sum_O;
 
-int sum_bpm=0;
-int sum_temp=0;
-int sum_O=0;
+
 long lastBeat = 0;    //Time of the last beat 
 long displaytime = 0; //Time of the last display update
 bool led_on = false;
@@ -268,16 +232,20 @@ void checkbutton(){
   pcflag = 0;
 }
 
-void restart(){
+void Display_5(){
    if(pcflag && !digitalRead(BUTTON)){
-     oled.init();
-     setup();
-     delay(1000);
-     }
+     draw_oled(5);
+     delay(1100);
+   }
    pcflag = 0;
 }
 
 void go_sleep() {
+  i=0;
+  cnt1=0; cnt=0;
+  sum_bpm=0; AVG_bpm=0;
+  AVG_temp=0; sum_temp=0;
+  AVG_O=0; sum_O=0; 
   oled.fill(0);
   oled.off();
   delay(10);
@@ -287,17 +255,11 @@ void go_sleep() {
   delay(10);
   pinMode(0,INPUT);
   pinMode(2,INPUT);
-  timer0_millis=0;
-  cnt1=0; cnt=0;
-  sum_bpm=0; AVG_bpm=0;
-  AVG_temp=0; sum_temp=0;
-  AVG_O=0; sum_O=0;
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);     
   sleep_mode();  // sleep until button press 
   // cause reset
-  setup(); 
+  setup();
 }
-
 
 void draw_oled(int msg) {
   oled.firstPage();
@@ -340,11 +302,12 @@ void draw_oled(int msg) {
                oled.drawStr(45,18,F("ECG"),2); 
                break;
     }
-  } while (oled.nextPage());
+  }  
+  while (oled.nextPage());
 }
 
 void setup(void) {
-  pinMode(LED, OUTPUT);  
+  init(&q);  
   pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력
   pinMode(10, INPUT); // ECG
   pinMode(11, INPUT); //ECG
@@ -366,7 +329,6 @@ void setup(void) {
   mlx.begin(); 
 }
 
-
 void loop()  
 {
   sensor.check();
@@ -380,9 +342,9 @@ void loop()
     checkbutton();
     draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message    
     delay(200);
-    ++sleep_counter;
+    ++sleep_counter;    
     if (sleep_counter>100) {
-      go_sleep(); 
+      go_sleep();
       sleep_counter = 0;
     }
   } 
@@ -407,51 +369,55 @@ void loop()
     // check IR or Red for heartbeat     
     if (draw_Red ? beatRed : beatIR){
       long btpm = 60000/(now - lastBeat);
-      if (btpm > 0 && +btpm < 200)
-        beatAvg = bpm.filter((int16_t)btpm);
-      lastBeat = now;
+      if (btpm > 0 && +btpm < 200) beatAvg = bpm.filter((int16_t)btpm);
+      lastBeat = now; 
       digitalWrite(LED, HIGH); 
-      led_on = true; 
+      led_on = true;
       // compute SpO2 ratio
       long numerator   = (pulseRed.avgAC() * pulseIR.avgDC())/256;
       long denominator = (pulseRed.avgDC() * pulseIR.avgAC())/256;
       int RX100 = (denominator>0) ? (numerator * 100)/denominator : 999;
       // using formula
-      SPO2m = 10400 - RX100*17+50;
-      SPO2f = (10400 - RX100*17+50)/100;  
+      SPO2f = (10400 - RX100*17+50)/100; 
       // from table
-      if ((RX100>=0) && (RX100<184)){
-        SPO2 = pgm_read_byte_near(&spo2_table[RX100]);}
-    } 
+      if ((RX100>=0) && (RX100<184))
+        SPO2 = pgm_read_byte_near(&spo2_table[RX100]);   
       if(now-displaytime>50){
-       
-      wave.scale();
-      draw_oled(2);
-      unsigned long time1 = millis() / 1000;
         cnt+=1;
-        sum_bpm += beatAvg; 
-        sum_O += SPO2m;
-        sum_temp += mlx.readObjectTempC();  
-        AVG_bpm = sum_bpm/cnt;
-        AVG_O = sum_O/cnt;
-        AVG_O = AVG_O/100;
-        AVG_temp =  sum_temp/cnt; 
-    
-      restart();
-   
-        if(cnt==10){
+       if(cnt==60){
+
           Serial.print("bpm : ");Serial.print(AVG_bpm);
-          Serial.print(", spo2 : "); Serial.print(AVG_O);
+          Serial.print(", spo2 : "); Serial.print(SPO2f);
           Serial.print(", temperature : ");Serial.print(AVG_temp);     
-          Serial.print(",  ECG : "); Serial.print(analogRead(A0)); 
+          
+          Serial.print(", ECG : "); 
+          for(i=1;i<=cnt;i++){
+          Serial.print(dequeue(&q));} 
+          
           draw_oled(5);
           delay(3000);
-         
           draw_oled(6);
           delay(2000);
-          pcflag = 1;
-          go_sleep();
-        }
+          pcflag = 1;    
+          go_sleep(); }
+        
+        unsigned long time1 = millis() / 1000; 
+        displaytime = now;
+        wave.scale();
+        draw_oled(2);
+        sum_bpm += beatAvg; 
+        sum_temp += mlx.readObjectTempC();
+                      
+        AVG_bpm = sum_bpm/cnt;        
+        AVG_temp =  sum_temp/cnt;
+        
+        Serial.print("  ECG : ");
+        Serial.println(analogRead(A0)); 
+        enqueue(&q,analogRead(A0));
+        delay(100); 
+ 
+        
       }
+    }
   }
 }
