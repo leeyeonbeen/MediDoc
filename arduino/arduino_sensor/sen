@@ -26,14 +26,7 @@
 #define OLED_RESET LED_BUILTIN
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
-#define MAX_QUEUE_SIZE 100
-
-typedef int element;
-typedef struct {
-   element queue[MAX_QUEUE_SIZE];
-   int front, rear;
-} QueueType;
-
+#define ECG 80
 
 SSD1306 oled; 
 MAX30102 sensor;
@@ -44,6 +37,11 @@ MAFilter bpm;
 #define LED LED_BUILTIN
 #define BUTTON 3
 #define OPTIONS 7
+
+
+  int E[ECG]={0};
+  
+  
 
 static const uint8_t heart_bits[] PROGMEM = { 0x00, 0x00, 0x38, 0x38, 0x7c, 0x7c, 0xfe, 0xfe, 0xfe, 0xff, 
                                         0xfe, 0xff, 0xfc, 0x7f, 0xf8, 0x3f, 0xf0, 0x1f, 0xe0, 0x0f,
@@ -97,46 +95,6 @@ void print_digit(int x, int y, long val, char c=' ', uint8_t field = 3,const int
 /*
  *   Record, scale  and display PPG Wavefoem
  */
-void error(char *message)
-{
-  fprintf(stderr,"%s\n",message);
-  exit(1);
-  }
-void init(QueueType *q)
-{
-   q -> front = q -> rear = 0;
-}
-
-int is_empty(QueueType *q)
-{
-   return (q->front == q->rear);
-}
-
-int is_full(QueueType *q)
-{
-   return ((q->rear+1)%MAX_QUEUE_SIZE == q->front);
-}
-
-void enqueue(QueueType *q, element item)
-{
-   if(is_full(q))
-      error("Queue is full");
-   q->rear = (q->front+1)%MAX_QUEUE_SIZE;
-   q->queue[q->rear]=item;
-}
-element dequeue(QueueType *q)
-{
-  if(is_empty(q))
-  error("Queue is empty");
-  q->front = (q->front+1)%MAX_QUEUE_SIZE;
-  return q->queue[q->front];
-  }
-element peek(QueueType *q)
-{
-  if(is_empty(q))
-  error("Queue is empty");
-  return q->queue[(q->front+1)%MAX_QUEUE_SIZE];
- }
 
 const uint8_t MAXWAVE = 72;
 
@@ -198,7 +156,6 @@ bool draw_Red = false;
 uint8_t pcflag =0;
 uint8_t istate = 0;
 uint8_t sleep_counter = 0;
-QueueType q;
 
 extern volatile unsigned long timer0_millis;
 
@@ -232,10 +189,9 @@ void checkbutton(){
   pcflag = 0;
 }
 
-void Display_5(){
+void restart(){
    if(pcflag && !digitalRead(BUTTON)){
-     draw_oled(5);
-     delay(1100);
+     setup();
    }
    pcflag = 0;
 }
@@ -306,8 +262,7 @@ void draw_oled(int msg) {
   while (oled.nextPage());
 }
 
-void setup(void) {
-  init(&q);  
+void setup(void) { 
   pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력
   pinMode(10, INPUT); // ECG
   pinMode(11, INPUT); //ECG
@@ -327,6 +282,7 @@ void setup(void) {
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
   Serial.begin(9600);
   mlx.begin(); 
+ 
 }
 
 void loop()  
@@ -347,6 +303,7 @@ void loop()
       go_sleep();
       sleep_counter = 0;
     }
+    restart();
   } 
   else { 
     sleep_counter = 0;
@@ -382,25 +339,7 @@ void loop()
       // from table
       if ((RX100>=0) && (RX100<184))
         SPO2 = pgm_read_byte_near(&spo2_table[RX100]);   
-      if(now-displaytime>50){
-        cnt+=1;
-       if(cnt==60){
-
-          Serial.print("bpm : ");Serial.print(AVG_bpm);
-          Serial.print(", spo2 : "); Serial.print(SPO2f);
-          Serial.print(", temperature : ");Serial.print(AVG_temp);     
-          
-          Serial.print(", ECG : "); 
-          for(i=1;i<=cnt;i++){
-          Serial.print(dequeue(&q));} 
-          
-          draw_oled(5);
-          delay(3000);
-          draw_oled(6);
-          delay(2000);
-          pcflag = 1;    
-          go_sleep(); }
-        
+      if(now-displaytime>50){      
         unsigned long time1 = millis() / 1000; 
         displaytime = now;
         wave.scale();
@@ -410,12 +349,29 @@ void loop()
                       
         AVG_bpm = sum_bpm/cnt;        
         AVG_temp =  sum_temp/cnt;
-        
-        Serial.print("  ECG : ");
-        Serial.println(analogRead(A0)); 
-        enqueue(&q,analogRead(A0));
+       
+        Serial.print("measuring : ");
+        Serial.println(cnt); 
+         cnt+=1;
+        E[cnt]=analogRead(A0);
         delay(100); 
- 
+      if(cnt==60){
+
+          Serial.print("bpm : ");Serial.print(AVG_bpm);
+          Serial.print(", spo2 : "); Serial.print(SPO2f);
+          Serial.print(", temperature : ");Serial.print(AVG_temp);     
+          
+          
+          for(i=0;i<=cnt;i++){
+            Serial.print(", ECG : "); 
+          Serial.print(E[i]);} 
+          
+          draw_oled(5);
+          delay(3000);
+          draw_oled(6);
+          delay(2000);
+          pcflag = 1;    
+          go_sleep(); }
         
       }
     }
