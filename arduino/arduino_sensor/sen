@@ -155,25 +155,13 @@ int AVG_bpm=0;
 float AVG_temp=0;
 int AVG_O=0;
 
-int sum_bpm;
-int sum_temp;
-int sum_O;
-
-long lastBeat = 0;    //Time of the last beat 
-long displaytime = 0; //Time of the last display update
-
+int sum_bpm=0;
+int sum_temp=0;
+int sum_O=0;
 
 void button(void){
     pcflag = 1;
 }
-
-void restart(){
-   if(pcflag && !digitalRead(BUTTON)){
-     setup();
-    }
-   pcflag = 0;
-}
-
 
 void checkbutton(){
   if (pcflag && !digitalRead(BUTTON)) {
@@ -186,12 +174,16 @@ void checkbutton(){
   pcflag = 0;
 }
 
+void restart(){
+   if(pcflag && !digitalRead(BUTTON)){
+     oled.init();
+     setup();
+     delay(1000);
+     }
+   pcflag = 0;
+}
+
 void go_sleep() {
-  cnt1=0;
-  cnt=0;
-  sum_bpm=0; AVG_bpm=0;
-  AVG_temp=0; sum_temp=0;
-  AVG_O=0; sum_O=0; 
   oled.fill(0);
   oled.off();
   delay(10);
@@ -205,17 +197,13 @@ void go_sleep() {
   sleep_mode();  // sleep until button press 
   // cause reset
   setup();
+  timer0_millis=0;
+  cnt1=0; cnt=0;
+  sum_bpm=0; AVG_bpm=0;
+  AVG_temp=0; sum_temp=0;
+  AVG_O=0; sum_O=0; 
 }
-void calculate(){
-        sum_bpm += beatAvg; 
-        sum_O += SPO2m;
-        sum_temp += mlx.readObjectTempC();
-          
-        AVG_bpm = sum_bpm/cnt;
-        AVG_O = sum_O/cnt;
-        AVG_O = AVG_O/100;
-        AVG_temp =  sum_temp/cnt;
-}
+
 
 void draw_oled(int msg) {
   oled.firstPage();
@@ -258,11 +246,11 @@ void draw_oled(int msg) {
                oled.drawStr(45,18,F("ECG"),2); 
                break;
     }
-  }  
-  while (oled.nextPage());
+  } while (oled.nextPage());
 }
 
 void setup(void) {
+  pinMode(LED, OUTPUT);  
   pinMode(BUTTON, INPUT_PULLUP);//버튼이 출력
   pinMode(10, INPUT); // ECG
   pinMode(11, INPUT); //ECG
@@ -284,10 +272,15 @@ void setup(void) {
   mlx.begin(); 
 }
 
+long lastBeat = 0;    //Time of the last beat 
+long displaytime = 0; //Time of the last display update
+bool led_on = false;
+
 void loop()  
 {
   sensor.check();
   long now = millis();   //start time of this cycle
+  unsigned long time1 = millis() / 1000;
   if (!sensor.available()) return;
   uint32_t irValue = sensor.getIR(); 
   uint32_t redValue = sensor.getRed();
@@ -298,7 +291,6 @@ void loop()
     draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message    
     delay(200);
     ++sleep_counter;
-    
     if (sleep_counter>100) {
       go_sleep(); 
       sleep_counter = 0;
@@ -306,7 +298,6 @@ void loop()
   } 
   else { 
     sleep_counter = 0;
-    for(i=0;i<60;i++){
     int16_t IR_signal, Red_signal;
     bool beatRed, beatIR;
     if (!filter_for_graph) {
@@ -328,7 +319,9 @@ void loop()
       long btpm = 60000/(now - lastBeat);
       if (btpm > 0 && +btpm < 200){ 
         beatAvg = bpm.filter((int16_t)btpm);}
-      lastBeat = now; 
+      lastBeat = now;
+      digitalWrite(LED, HIGH); 
+      led_on = true; 
       // compute SpO2 ratio
       long numerator   = (pulseRed.avgAC() * pulseIR.avgDC())/256;
       long denominator = (pulseRed.avgDC() * pulseIR.avgAC())/256;
@@ -336,38 +329,39 @@ void loop()
       // using formula
       SPO2m = 10400 - RX100*17+50;
       SPO2f = (10400 - RX100*17+50)/100; 
+        sum_bpm += beatAvg; 
+        sum_O += SPO2m;
+        sum_temp += mlx.readObjectTempC();
+          
+        AVG_bpm = sum_bpm/cnt;
+        AVG_O = sum_O/cnt;
+        AVG_O = AVG_O/100;
+        AVG_temp =  sum_temp/cnt;  
       // from table
       if ((RX100>=0) && (RX100<184)){
         SPO2 = pgm_read_byte_near(&spo2_table[RX100]);}
-    
+    } 
       if(now-displaytime>50){
-        unsigned long time1 = millis() / 1000; 
-        wave.scale();
-        draw_oled(2);
-       
-        
-        calculate();
-        
-        Serial.print("  ECG : ");
-        Serial.print(analogRead(A0)); 
-
-        delay(1000); 
-        cnt+=1;
+      displaytime = now;
+      wave.scale();
+      draw_oled(2);
       }
+        restart();
     }
-   }
-        if(cnt==60){
+        if (led_on && (now - lastBeat)>25){
+        digitalWrite(LED, LOW);
+        led_on = false;
+     }
+        if(cnt==10){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(AVG_O);
-          Serial.print(", temperature : ");Serial.println(AVG_temp);     
+          Serial.print(", temperature : ");Serial.print(AVG_temp);     
+          Serial.print(",  ECG : "); Serial.print(analogRead(A0)); 
           draw_oled(5);
           delay(3000);
-
+         
           draw_oled(6);
           delay(2000);
-          pcflag = 1;    
           go_sleep();
         }
-  }
-  restart();
 }
