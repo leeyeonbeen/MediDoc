@@ -350,10 +350,11 @@ void loop()
         }   
       
         if(cnt==130){
+          Serial.println("");
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(SPO2f);
           Serial.print(", temperature : ");Serial.println(AVG_temp);     
-          delay(1000);
+          delay(1500);
 
           Serial.print("ECG1 : ");
           for(i=30;i<=cnt-1;i++){
@@ -363,7 +364,7 @@ void loop()
             }
             else if(i==80){
               Serial.println("");
-              delay(1000);
+              delay(1500);
               Serial.print("ECG2 : ");
               Serial.print(E[i]);
             }

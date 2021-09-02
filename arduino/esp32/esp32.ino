@@ -4,12 +4,12 @@
 #include <ArduinoJson.h>
 #include<AWS_IOT.h>
 
-#define WIFI_SSID "{wifi_ssid}"
-#define WIFI_PASSWD "{wifi_passwd}"
+#define WIFI_SSID "SK_WiFiGIGAEC63_2.4G"
+#define WIFI_PASSWD "2005003420"
 
-#define CLIENT_ID "{client_id}"
-#define MQTT_TOPIC "{mqtt_topic}"
-#define AWS_HOST "{aws_host}"
+#define CLIENT_ID "coco"
+#define MQTT_TOPIC "$aws/things/coco/shadow/name/crunch"
+#define AWS_HOST "a2utwh13lgm1sf-ats.iot.ap-northeast-2.amazonaws.com"
 
 #define RXp2 16
 #define TXp2 17
@@ -38,7 +38,7 @@ void setup(){
   else{
     Serial.println("connection failed\n"); 
   }
-  Serial.println("done\n");
+  Serial.println("\ndone.\n");
   timeClient.begin();
 }
 
@@ -54,14 +54,14 @@ void loop(){
   String epoch = epochs + epochms;
   if(serial2 != ""){
     String jsondata= "";
-    StaticJsonBuffer<300> jsonBuffer;
+    StaticJsonBuffer<500> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["timestamp"] = epoch;
     root["payload"] = serial2;
     root.printTo(jsondata);
     
-    char payload[300];
-    jsondata.toCharArray(payload,300);
+    char payload[500];
+    jsondata.toCharArray(payload,500);
 
     Serial.println("pub : ");
     Serial.println(payload);
@@ -71,6 +71,7 @@ void loop(){
     }
     else{
       Serial.println("failed\n"); 
+      
     }
   }
 }
