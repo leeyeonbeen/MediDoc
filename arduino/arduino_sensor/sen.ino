@@ -26,7 +26,7 @@
 #define OLED_RESET LED_BUILTIN
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
-#define ECG 80
+#define ECG 135
 
 SSD1306 oled; 
 MAX30102 sensor;
@@ -37,12 +37,7 @@ MAFilter bpm;
 #define LED LED_BUILTIN
 #define BUTTON 3
 #define OPTIONS 7
-
-
-int E[ECG]={0};
   
-  
-
 static const uint8_t heart_bits[] PROGMEM = { 0x00, 0x00, 0x38, 0x38, 0x7c, 0x7c, 0xfe, 0xfe, 0xfe, 0xff, 
                                         0xfe, 0xff, 0xfc, 0x7f, 0xf8, 0x3f, 0xf0, 0x1f, 0xe0, 0x0f,
                                         0xc0, 0x07, 0x80, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 
@@ -168,6 +163,7 @@ int i=0;
 int sum_bpm;
 int sum_temp;
 int sum_O;
+int E[ECG]={0};
 
 long lastBeat = 0;    //Time of the last beat 
 long displaytime = 0; //Time of the last display update
@@ -345,11 +341,6 @@ void loop()
         delay(10); 
         
         if(cnt>=30&&cnt<130){
-          unsigned long time1 = millis() / 1000; 
-          displaytime = now;
-          wave.scale();
-          draw_oled(2);
-          
           sum_bpm += beatAvg; 
           sum_temp += mlx.readObjectTempC();
                       
@@ -364,9 +355,10 @@ void loop()
           Serial.print(", temperature : ");Serial.print(AVG_temp);     
           
           Serial.print(", ECG : ");
-          for(i=0;i<=cnt;i++){
+          for(i=30;i<=cnt-1;i++){
             Serial.print(E[i]);
             Serial.print(", ");
+            E[i] = 0;
           } 
           draw_oled(5);
           delay(3000);
