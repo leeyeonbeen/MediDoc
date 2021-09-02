@@ -39,7 +39,7 @@ MAFilter bpm;
 #define OPTIONS 7
 
 
-  int E[ECG]={0};
+int E[ECG]={0};
   
   
 
@@ -298,13 +298,13 @@ void loop()
     checkbutton();
     draw_oled(sleep_counter<=50 ? 1 : 4); // finger not down message    
     delay(200);
-    ++sleep_counter;    
+    ++sleep_counter;
     if (sleep_counter>100) {
       go_sleep();
       sleep_counter = 0;
     }
     restart();
-  } 
+  }
   else { 
     sleep_counter = 0;
     int16_t IR_signal, Red_signal;
@@ -340,20 +340,29 @@ void loop()
       if ((RX100>=0) && (RX100<184))
         SPO2 = pgm_read_byte_near(&spo2_table[RX100]);   
       if(now-displaytime>50){      
+        unsigned long time1 = millis() / 1000;
+        displaytime = now;
+        wave.scale();
+        draw_oled(2);
+        cnt+=1;
+        delay(10); 
+        
+        if(cnt>=300&&cnt<1300){
         unsigned long time1 = millis() / 1000; 
         displaytime = now;
         wave.scale();
         draw_oled(2);
+        cnt+=1;
+          
         sum_bpm += beatAvg; 
         sum_temp += mlx.readObjectTempC();
                       
         AVG_bpm = sum_bpm/cnt;        
-        AVG_temp =  sum_temp/cnt;
-
-         cnt+=1;
+        AVG_temp = sum_temp/cnt;
         E[cnt]=analogRead(A0);
-        delay(100); 
-      if(cnt==60){
+        }
+        
+      if(cnt==1300){
 
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(SPO2f);
@@ -363,14 +372,15 @@ void loop()
           for(i=0;i<=cnt;i++){
          
           Serial.print(E[i]);
-            Serial.print(" ");} 
+          Serial.print(", ");
+            } 
           draw_oled(5);
           delay(3000);
           draw_oled(6);
           delay(2000);
           pcflag = 1;    
-          go_sleep(); }
-        
+          go_sleep(); 
+          }
       }
     }
   }
