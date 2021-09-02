@@ -102,7 +102,7 @@ class Waveform {
   public:
     Waveform(void) {
       wavep = 0;
-      }
+    }
     void record(int waveval) {
       waveval = waveval/8;         // scale to fit in byte  缩放以适合字节
       waveval += 128;              //shift so entired waveform is +ve  
@@ -168,7 +168,6 @@ int i=0;
 int sum_bpm;
 int sum_temp;
 int sum_O;
-
 
 long lastBeat = 0;    //Time of the last beat 
 long displaytime = 0; //Time of the last display update
@@ -252,7 +251,6 @@ void draw_oled(int msg) {
                break;
        case 6: oled.drawStr(24,0,F("Good"),2); 
                oled.drawStr(25,18,F("bye"),2);
-         
                break;      
        case 7: oled.drawStr(25,0,F("ATTACH"),2); 
                oled.drawStr(45,18,F("ECG"),2); 
@@ -282,7 +280,6 @@ void setup(void) {
   attachInterrupt(digitalPinToInterrupt(BUTTON),button, CHANGE);
   Serial.begin(9600);
   mlx.begin(); 
- 
 }
 
 void loop()  
@@ -338,13 +335,7 @@ void loop()
       SPO2f = (10400 - RX100*17+50)/100; 
       // from table
       if ((RX100>=0) && (RX100<184))
-        SPO2 = pgm_read_byte_near(&spo2_table[RX100]); 
-
-
-
-
-
-          
+        SPO2 = pgm_read_byte_near(&spo2_table[RX100]);   
       if(now-displaytime>50){      
         unsigned long time1 = millis() / 1000;
         displaytime = now;
@@ -352,54 +343,38 @@ void loop()
         draw_oled(2);
         cnt+=1;
         delay(10); 
-        Serial.println(cnt);
-        if(cnt>=300&&cnt<1300){
-        unsigned long time1 = millis() / 1000; 
-        displaytime = now;
-        wave.scale();
-        draw_oled(2);
-   
-         Serial.println(cnt); 
-        sum_bpm += beatAvg; 
-        sum_temp += mlx.readObjectTempC();
-                      
-        AVG_bpm = sum_bpm/cnt;        
-        AVG_temp = sum_temp/cnt;
-        E[cnt]=analogRead(A0);
-        Serial.println(analogRead(A0));
-        }
-
-
-
-
-
-
-
         
-      if(cnt==130){
-
+        if(cnt>=30&&cnt<130){
+          unsigned long time1 = millis() / 1000; 
+          displaytime = now;
+          wave.scale();
+          draw_oled(2);
+          
+          sum_bpm += beatAvg; 
+          sum_temp += mlx.readObjectTempC();
+                      
+          AVG_bpm = sum_bpm/cnt;        
+          AVG_temp = sum_temp/cnt;
+          E[cnt]=analogRead(A0);
+        }   
+      
+        if(cnt==130){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(SPO2f);
           Serial.print(", temperature : ");Serial.print(AVG_temp);     
           
           Serial.print(", ECG : ");
-         
-          
-          
           for(i=0;i<=cnt;i++){
-         
-          Serial.print(E[i]);
-          Serial.print(", ");
-            } 
-
-            
+            Serial.print(E[i]);
+            Serial.print(", ");
+          } 
           draw_oled(5);
           delay(3000);
           draw_oled(6);
           delay(2000);
           pcflag = 1;    
           go_sleep(); 
-          }
+        }
       }
     }
   }
