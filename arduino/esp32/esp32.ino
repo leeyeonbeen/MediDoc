@@ -21,7 +21,6 @@ NTPClient timeClient(ntpUDP, "kr.pool.ntp.org", 32400,10);
 void setup(){
   Serial.begin(115200);
   Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
-  Serial.print("\ninitializing thing temp_humidity_\n");
 
   Serial.print("\n initialing wifi: connecting to ");
   Serial.println(WIFI_SSID);
@@ -37,9 +36,9 @@ void setup(){
     Serial.println(" connected to AWS\n done.");
   }
   else{
-    Serial.println("connection failed\n make syre blabla"); 
+    Serial.println("connection failed\n"); 
   }
-  Serial.println("done\n\ndone.\n");
+  Serial.println("done\n");
   timeClient.begin();
 }
 
@@ -55,7 +54,7 @@ void loop(){
   String epoch = epochs + epochms;
   if(serial2 != ""){
     String jsondata= "";
-    StaticJsonBuffer<200> jsonBuffer;
+    StaticJsonBuffer<300> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["timestamp"] = epoch;
     root["payload"] = serial2;

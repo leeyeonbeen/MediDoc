@@ -352,13 +352,26 @@ void loop()
         if(cnt==130){
           Serial.print("bpm : ");Serial.print(AVG_bpm);
           Serial.print(", spo2 : "); Serial.print(SPO2f);
-          Serial.print(", temperature : ");Serial.print(AVG_temp);     
-          
-          Serial.print(", ECG : ");
+          Serial.print(", temperature : ");Serial.println(AVG_temp);     
+          Serial.println("");
+
+          Serial.print("ECG1 : ");
           for(i=30;i<=cnt-1;i++){
-            Serial.print(E[i]);
-            Serial.print(", ");
-            E[i] = 0;
+            if(i<80) {
+              Serial.print(E[i]);
+              Serial.print(", ");
+            }
+            else if(i==80){
+              Serial.println("");
+              Serial.println("");
+              Serial.print("ECG2 : ");
+              Serial.print(E[i]);
+            }
+            else {
+              Serial.print(", ");
+              Serial.print(E[i]);
+            }
+            E[i]=0;
           } 
           draw_oled(5);
           delay(3000);
